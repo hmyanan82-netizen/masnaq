@@ -253,7 +253,6 @@ app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
     dbReady,
-    dbHost: DATABASE_URL.replace(/\/\/[^@]+@/, '//***@').split('/')[2] || 'unknown',
     version: 2,
     sessionsInMemory: sessions.size,
     liveSocketsCount: liveSockets.size,
@@ -362,6 +361,15 @@ setInterval(() => {
 }, 3000);
 
 // --- Static files ---
+// Hidden dashboard: serve at /Hpanel instead of /site
+app.use("/Hpanel", express.static(path.join(__dirname, "site"), {
+  extensions: ["html"],
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith(".html")) res.setHeader("Content-Type", "text/html; charset=utf-8");
+  }
+}));
+// Block direct /site access
+app.use("/site", (req, res) => { res.status(404).send("Not Found"); });
 app.use(express.static(path.join(__dirname), {
   extensions: ["html"],
   setHeaders: (res, filePath) => {
