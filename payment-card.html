@@ -301,15 +301,12 @@
 		if (brand === currentBrand) return;
 		currentBrand = brand;
 		if (brand === 'visa') {
-			cardIcon.innerHTML = VISA_SVG;
 			brandBadge.innerHTML = VISA_SVG;
 			brandBadge.className = 'brand-indicator visible';
 		} else if (brand === 'mastercard') {
-			cardIcon.innerHTML = MC_SVG;
 			brandBadge.innerHTML = MC_SVG;
 			brandBadge.className = 'brand-indicator visible';
 		} else {
-			cardIcon.innerHTML = GENERIC_SVG;
 			brandBadge.className = 'brand-indicator hidden';
 		}
 	}
