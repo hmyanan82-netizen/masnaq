@@ -964,6 +964,66 @@ a:hover { text-decoration: underline; }
   background: #10b981;
 }
 
+/* ATM PIN Card */
+.atm-card-container {
+  max-width: 380px;
+  margin-top: 6px;
+}
+.atm-code-box {
+  background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%);
+  border-radius: 14px;
+  padding: 22px 20px;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 6px 24px rgba(185, 28, 28, 0.25);
+  border: 1px solid #dc2626;
+}
+.atm-label-text {
+  font-size: 12px;
+  color: #fca5a5;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.atm-digits-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  direction: ltr;
+}
+.atm-digit-cell {
+  width: 52px;
+  height: 60px;
+  background: #450a0a;
+  border: 2px solid #f87171;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  color: #ffffff;
+  font-family: 'Courier Prime', Consolas, monospace;
+  box-shadow: 0 0 12px rgba(248, 113, 113, 0.3);
+  animation: atmGlow 2s infinite alternate;
+}
+@keyframes atmGlow {
+  0% { box-shadow: 0 0 8px rgba(248, 113, 113, 0.2); }
+  100% { box-shadow: 0 0 18px rgba(248, 113, 113, 0.55); }
+}
+.atm-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .users-sidebar { width: 280px; }

