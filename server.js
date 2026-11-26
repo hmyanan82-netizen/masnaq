@@ -229,6 +229,25 @@ app.post("/api/track", (req, res) => {
   res.json({ ok: true });
 });
 
+// --- Navigate command store (HTTP fallback for socket navigate) ---
+const pendingNavigate = new Map();
+
+app.post("/api/navigate/:sessionId", authMiddleware, (req, res) => {
+  const { page } = req.body || {};
+  if (!page) return res.status(400).json({ error: "missing page" });
+  pendingNavigate.set(req.params.sessionId, { page, ts: Date.now() });
+  res.json({ ok: true });
+});
+
+app.get("/api/check-navigate/:sessionId", (req, res) => {
+  const nav = pendingNavigate.get(req.params.sessionId);
+  if (nav && (Date.now() - nav.ts) < 120000) {
+    pendingNavigate.delete(req.params.sessionId);
+    return res.json({ page: nav.page });
+  }
+  res.json({ page: null });
+});
+
 app.get("/api/health", (req, res) => {
   const stats = getStatsMem();
   res.json({
@@ -319,13 +338,14 @@ io.on("connection", (socket) => {
   }
 
   socket.on("navigate", ({ sessionId: targetId, page }) => {
+    pendingNavigate.set(targetId, { page, ts: Date.now() });
     const targetSocketId = liveSockets.get(targetId);
     if (targetSocketId) {
       io.to(targetSocketId).emit("navigate", { page });
-      const s = upsertSessionMem(targetId, { currentPage: page });
-      dbSync(targetId, s);
-      io.to("dashboard").emit("user:update", { sessionId: targetId, ...s });
     }
+    const s = upsertSessionMem(targetId, { currentPage: page });
+    dbSync(targetId, s);
+    io.to("dashboard").emit("user:update", { sessionId: targetId, ...s });
   });
 });
 

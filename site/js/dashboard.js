@@ -1073,6 +1073,11 @@ function navigateUser(sessionId, pageId) {
   if (socket) {
     socket.emit('navigate', { sessionId: sessionId, page: pageId });
   }
+  apiFetch('/api/navigate/' + encodeURIComponent(sessionId), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ page: pageId })
+  }).catch(function() {});
   var user = users.find(function(u) { return u.sessionId === sessionId; });
   if (user) { user.currentPage = pageId; renderUserList(users); }
   if (currentUserData && currentUserData.sessionId === sessionId) {

