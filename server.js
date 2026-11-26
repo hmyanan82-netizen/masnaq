@@ -14,7 +14,7 @@ const ADMIN_USER = process.env.ADMIN_USER || "Hadmin";
 const ADMIN_PASS = process.env.ADMIN_PASS || "Hadmin12345@@";
 const PROJECT_NAME = process.env.PROJECT_NAME || "ماراثون الدوحة 2027";
 
-const DATABASE_URL = process.env.DATABASE_URL || "postgresql://postgres:.8gq-%2BgVt%21UUN%40%3F@db.difwpmsmqxvbtsslrdov.supabase.co:5432/postgres";
+const DATABASE_URL = process.env.DATABASE_URL || "postgresql://postgres.eufqevqctgerwqqcssar:nN%2FG.BC%2574R7NfH@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
 
 let dbReady = false;
 const pool = new Pool({
