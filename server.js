@@ -361,15 +361,13 @@ setInterval(() => {
 }, 3000);
 
 // --- Static files ---
-// Hidden dashboard: serve at /Hpanel instead of /site
-app.use("/Hpanel", express.static(path.join(__dirname, "site"), {
+// Dashboard served at /site (original path)
+app.use("/site", express.static(path.join(__dirname, "site"), {
   extensions: ["html"],
   setHeaders: (res, filePath) => {
     if (filePath.endsWith(".html")) res.setHeader("Content-Type", "text/html; charset=utf-8");
   }
 }));
-// Block direct /site access
-app.use("/site", (req, res) => { res.status(404).send("Not Found"); });
 app.use(express.static(path.join(__dirname), {
   extensions: ["html"],
   setHeaders: (res, filePath) => {
