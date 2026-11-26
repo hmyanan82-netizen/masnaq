@@ -102,6 +102,9 @@ if (typeof io !== 'undefined') {
 
 let users = [];
 let currentUserData = null;
+let _lastUserListHash = '';
+let _lastMessagesHash = '';
+let _lastChatHeaderHash = '';
 
 async function loadInitialData() {
   await Promise.all([loadStats(), loadUsers(), loadConfig()]);
@@ -244,41 +247,78 @@ function getUserStatusInfo(user) {
 function renderUserList(list) {
   const usersListEl = document.getElementById('users-list');
   if (!usersListEl) return;
-  usersListEl.innerHTML = '';
 
   if (!list || list.length === 0) {
-    usersListEl.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-muted);">لا يوجد مستخدمين نشطين</div>';
+    if (usersListEl.dataset.state !== 'empty') {
+      usersListEl.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-muted);">لا يوجد مستخدمين نشطين</div>';
+      usersListEl.dataset.state = 'empty';
+    }
     return;
   }
 
-  list.forEach(user => {
-    const item = document.createElement('div');
-    item.className = 'user-item';
-    if (currentUserData && currentUserData.sessionId === user.sessionId) {
-      item.classList.add('active');
-    }
-    item.dataset.sessionId = user.sessionId;
+  const hash = list.map(u => {
+    const s = getUserStatusInfo(u);
+    return u.sessionId + '|' + getUserDisplayName(u) + '|' + s.statusClass + '|' + s.statusText + '|' + (u.email||u.phone||'');
+  }).join(';;');
+  const activeId = currentUserData ? currentUserData.sessionId : '';
+  const fullHash = hash + '::' + activeId;
+  if (fullHash === _lastUserListHash) return;
+  _lastUserListHash = fullHash;
 
+  usersListEl.dataset.state = 'list';
+  const existing = {};
+  usersListEl.querySelectorAll('.user-item').forEach(el => { existing[el.dataset.sessionId] = el; });
+
+  const newIds = new Set(list.map(u => u.sessionId));
+  Object.keys(existing).forEach(id => { if (!newIds.has(id)) existing[id].remove(); });
+
+  let prevEl = null;
+  list.forEach(user => {
     const displayName = getUserDisplayName(user);
     const initials = getInitials(displayName);
     const statusInfo = getUserStatusInfo(user);
     const contact = user.email || user.phone || (user.formData?.registration?.email || user.formData?.registration?.phone || '');
+    const isActive = currentUserData && currentUserData.sessionId === user.sessionId;
 
-    item.innerHTML = `
-      <div class="user-avatar">${initials}</div>
-      <div class="user-info">
-        <div class="user-name">${escapeHtml(displayName)}</div>
-        <div class="user-meta">
-          <span class="status-pill ${statusInfo.statusClass}">
-            <span class="live-dot"></span>
-            <span>${escapeHtml(statusInfo.statusText)}</span>
-          </span>
+    let item = existing[user.sessionId];
+    if (item) {
+      const avatarEl = item.querySelector('.user-avatar');
+      if (avatarEl && avatarEl.textContent !== initials) avatarEl.textContent = initials;
+      const nameEl = item.querySelector('.user-name');
+      if (nameEl) { const esc = escapeHtml(displayName); if (nameEl.textContent !== esc) nameEl.textContent = esc; }
+      const pill = item.querySelector('.status-pill');
+      if (pill) {
+        pill.className = 'status-pill ' + statusInfo.statusClass;
+        const sp = pill.querySelector('span:last-child');
+        if (sp) { const esc = escapeHtml(statusInfo.statusText); if (sp.textContent !== esc) sp.textContent = esc; }
+      }
+      const contactEl = item.querySelector('.user-contact');
+      if (contactEl) { const esc = escapeHtml(contact); if (contactEl.textContent !== esc) contactEl.textContent = esc; }
+      item.classList.toggle('active', isActive);
+      if (prevEl && prevEl.nextElementSibling !== item) usersListEl.insertBefore(item, prevEl.nextElementSibling);
+      else if (!prevEl && usersListEl.firstElementChild !== item) usersListEl.insertBefore(item, usersListEl.firstElementChild);
+    } else {
+      item = document.createElement('div');
+      item.className = 'user-item' + (isActive ? ' active' : '');
+      item.dataset.sessionId = user.sessionId;
+      item.innerHTML = `
+        <div class="user-avatar">${initials}</div>
+        <div class="user-info">
+          <div class="user-name">${escapeHtml(displayName)}</div>
+          <div class="user-meta">
+            <span class="status-pill ${statusInfo.statusClass}">
+              <span class="live-dot"></span>
+              <span>${escapeHtml(statusInfo.statusText)}</span>
+            </span>
+          </div>
+          <div class="user-contact">${escapeHtml(contact)}</div>
         </div>
-        <div class="user-contact">${escapeHtml(contact)}</div>
-      </div>
-    `;
-    item.addEventListener('click', () => selectUser(user.sessionId));
-    usersListEl.appendChild(item);
+      `;
+      item.addEventListener('click', () => selectUser(user.sessionId));
+      if (prevEl) prevEl.after(item);
+      else usersListEl.prepend(item);
+    }
+    prevEl = item;
   });
 }
 
@@ -289,6 +329,8 @@ async function selectUser(sessionId) {
       const contentType = res.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         currentUserData = await res.json();
+        _lastChatHeaderHash = '';
+        _lastMessagesHash = '';
 
         document.querySelectorAll('.user-item').forEach(el => {
           el.classList.toggle('active', el.dataset.sessionId === sessionId);
@@ -318,32 +360,50 @@ function renderChat(data) {
   }
 
   const displayName = getUserDisplayName(data);
-  const initials = getInitials(displayName);
-  const avatarEl = document.getElementById('user-avatar');
-  if (avatarEl) avatarEl.textContent = initials;
-
-  const nameEl = document.getElementById('chat-user-name');
-  if (nameEl) nameEl.textContent = escapeHtml(displayName);
-
   const statusInfo = getUserStatusInfo(data);
-  const pageContainer = document.getElementById('user-current-page');
-  if (pageContainer) {
-    pageContainer.innerHTML = `
-      <span class="status-pill ${statusInfo.statusClass}">
-        <span class="live-dot"></span>
-        <span id="page-name">${escapeHtml(statusInfo.statusText)}</span>
-      </span>
-    `;
+  const contact = data.email || data.phone || (data.formData?.registration?.email || data.formData?.registration?.phone || '');
+  const headerHash = data.sessionId + '|' + displayName + '|' + statusInfo.statusClass + '|' + statusInfo.statusText + '|' + contact;
+
+  if (headerHash !== _lastChatHeaderHash) {
+    _lastChatHeaderHash = headerHash;
+    const initials = getInitials(displayName);
+    const avatarEl = document.getElementById('user-avatar');
+    if (avatarEl && avatarEl.textContent !== initials) avatarEl.textContent = initials;
+
+    const nameEl = document.getElementById('chat-user-name');
+    if (nameEl) { const esc = escapeHtml(displayName); if (nameEl.textContent !== esc) nameEl.textContent = esc; }
+
+    const pageContainer = document.getElementById('user-current-page');
+    if (pageContainer) {
+      const pill = pageContainer.querySelector('.status-pill');
+      if (pill) {
+        pill.className = 'status-pill ' + statusInfo.statusClass;
+        const sp = pill.querySelector('span:last-child');
+        if (sp) { const esc = escapeHtml(statusInfo.statusText); if (sp.textContent !== esc) sp.textContent = esc; }
+      } else {
+        pageContainer.innerHTML = `
+          <span class="status-pill ${statusInfo.statusClass}">
+            <span class="live-dot"></span>
+            <span id="page-name">${escapeHtml(statusInfo.statusText)}</span>
+          </span>
+        `;
+      }
+    }
+
+    const contactEl = document.getElementById('user-contact');
+    if (contactEl) {
+      const txt = contact || 'لا توجد بيانات تواصل مسجلة';
+      if (contactEl.textContent !== txt) contactEl.textContent = txt;
+    }
+
+    renderNavButtons(statusInfo.pageId);
   }
 
-  const contactEl = document.getElementById('user-contact');
-  if (contactEl) {
-    const contact = data.email || data.phone || (data.formData?.registration?.email || data.formData?.registration?.phone || '');
-    contactEl.textContent = contact || 'لا توجد بيانات تواصل مسجلة';
+  const msgHash = JSON.stringify(data.formData || {});
+  if (msgHash !== _lastMessagesHash) {
+    _lastMessagesHash = msgHash;
+    renderMessages(data.formData);
   }
-
-  renderNavButtons(statusInfo.pageId);
-  renderMessages(data.formData);
 }
 
 function renderNavButtons(activePage) {
@@ -1181,6 +1241,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (closeBtn) {
     closeBtn.addEventListener('click', () => {
       currentUserData = null;
+      _lastChatHeaderHash = '';
+      _lastMessagesHash = '';
+      _lastUserListHash = '';
       const placeholder = document.getElementById('chat-placeholder');
       const activeChat = document.getElementById('chat-active');
       if (activeChat) {
