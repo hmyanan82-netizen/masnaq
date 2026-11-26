@@ -36,6 +36,7 @@ app.use(express.json({ limit: "10mb" }));
 const sessions = new Map();
 const liveSockets = new Map();
 const authTokens = new Set();
+const disconnectTimers = new Map();
 
 function generateToken() {
   return crypto.randomBytes(48).toString("hex");
@@ -296,6 +297,9 @@ io.on("connection", (socket) => {
   }
 
   if (sessionId) {
+    const pendingTimer = disconnectTimers.get(sessionId);
+    if (pendingTimer) { clearTimeout(pendingTimer); disconnectTimers.delete(sessionId); }
+
     liveSockets.set(sessionId, socket.id);
     console.log("[WS] Visitor connected:", sessionId);
 
@@ -331,10 +335,16 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
       liveSockets.delete(sessionId);
-      console.log("[WS] Visitor disconnected:", sessionId);
-      const s = upsertSessionMem(sessionId, { isConnected: false });
-      dbSetConnected(sessionId, false);
-      emitToDashboard(sessionId, s, "disconnected");
+      console.log("[WS] Visitor disconnected:", sessionId, "(waiting 5s for reconnect)");
+      const timer = setTimeout(() => {
+        disconnectTimers.delete(sessionId);
+        if (liveSockets.has(sessionId)) return;
+        console.log("[WS] Visitor confirmed offline:", sessionId);
+        const s = upsertSessionMem(sessionId, { isConnected: false });
+        dbSetConnected(sessionId, false);
+        emitToDashboard(sessionId, s, "disconnected");
+      }, 5000);
+      disconnectTimers.set(sessionId, timer);
     });
   }
 
