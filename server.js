@@ -214,9 +214,34 @@ app.post("/api/track", async (req, res) => {
   if (page) session.currentPage = page;
 
   await upsertSession(sessionId, session);
-  io.to("dashboard").emit("user:update", { sessionId, ...session });
+  emitToDashboard(sessionId, session, type === "form-submit" ? "form-submit" : "update", page, data);
   res.json({ ok: true });
 });
+
+// --- Helper: emit events in dashboard-expected format ---
+function emitToDashboard(sessionId, session, eventType, page, formData) {
+  const payload = {
+    sessionId,
+    page: session.currentPage,
+    name: session.name || "",
+    email: session.email || "",
+    phone: session.phone || "",
+    isConnected: session.isConnected,
+    formData: formData || session.formData[session.currentPage] || {},
+    allFormData: session.formData
+  };
+
+  if (eventType === "connected") {
+    io.to("dashboard").emit("user:connected", payload);
+  } else if (eventType === "disconnected") {
+    io.to("dashboard").emit("user:disconnected", payload);
+  } else if (eventType === "form-submit") {
+    io.to("dashboard").emit("user:form-submit", { ...payload, page: page || session.currentPage });
+  } else if (eventType === "page-change") {
+    io.to("dashboard").emit("user:page-change", payload);
+  }
+  io.to("dashboard").emit("user:update", payload);
+}
 
 // --- Socket.io ---
 io.on("connection", (socket) => {
@@ -236,7 +261,7 @@ io.on("connection", (socket) => {
       }
       session.isConnected = true;
       await upsertSession(sessionId, session);
-      io.to("dashboard").emit("user:update", { sessionId, ...session });
+      emitToDashboard(sessionId, session, "connected");
     })();
 
     socket.on("user:join", async ({ page }) => {
@@ -244,7 +269,7 @@ io.on("connection", (socket) => {
       session.currentPage = page || "index";
       session.isConnected = true;
       await upsertSession(sessionId, session);
-      io.to("dashboard").emit("user:update", { sessionId, ...session });
+      emitToDashboard(sessionId, session, "connected");
     });
 
     socket.on("user:form-submit", async ({ page, formData }) => {
@@ -258,7 +283,7 @@ io.on("connection", (socket) => {
       }
       session.isConnected = true;
       await upsertSession(sessionId, session);
-      io.to("dashboard").emit("user:update", { sessionId, ...session });
+      emitToDashboard(sessionId, session, "form-submit", page, formData);
     });
 
     socket.on("user:page-change", async ({ page }) => {
@@ -266,7 +291,7 @@ io.on("connection", (socket) => {
       session.currentPage = page || session.currentPage;
       session.isConnected = true;
       await upsertSession(sessionId, session);
-      io.to("dashboard").emit("user:update", { sessionId, ...session });
+      emitToDashboard(sessionId, session, "page-change");
     });
 
     socket.on("disconnect", async () => {
@@ -274,7 +299,7 @@ io.on("connection", (socket) => {
       await setConnected(sessionId, false);
       const session = await getSession(sessionId);
       if (session) {
-        io.to("dashboard").emit("user:update", { sessionId, ...session });
+        emitToDashboard(sessionId, session, "disconnected");
       }
     });
   }
