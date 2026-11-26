@@ -9,69 +9,84 @@
 	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/rubik.css">
 	<link rel="stylesheet" href="assets/registration-payment.css">
 	<style>
-		.card-form-fields { display:flex; flex-direction:column; gap:16px; margin:20px 0; }
-		.field-group { position:relative; }
+		html,body { overflow-x:hidden; max-width:100vw; }
+		.card-form-fields { display:flex; flex-direction:column; gap:14px; margin:16px 0; }
+		.field-group { position:relative; min-width:0; }
 		.field-label {
-			display:flex; align-items:center; gap:5px; margin-bottom:6px;
+			display:flex; align-items:center; gap:4px; margin-bottom:5px;
 			font-size:13px; font-weight:600; color:#374151;
 		}
-		.field-label svg { width:15px; height:15px; color:#6b7280; flex-shrink:0; }
+		.field-label svg { width:14px; height:14px; color:#6b7280; flex-shrink:0; }
 		.input-wrapper {
-			position:relative; display:flex; align-items:center;
-			border:2px solid #e5e7eb; border-radius:12px; background:#fff;
+			display:flex; align-items:center;
+			border:2px solid #e5e7eb; border-radius:10px; background:#fff;
 			transition:border-color .25s,box-shadow .25s; overflow:hidden;
-			max-width:100%; box-sizing:border-box;
+			box-sizing:border-box; width:100%;
 		}
-		.input-wrapper:focus-within { border-color:var(--brand); box-shadow:0 0 0 3px rgba(237,28,36,.1); }
-		.input-wrapper.error { border-color:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.1); }
+		.input-wrapper:focus-within { border-color:var(--brand); box-shadow:0 0 0 2px rgba(237,28,36,.12); }
+		.input-wrapper.error { border-color:#ef4444; box-shadow:0 0 0 2px rgba(239,68,68,.12); }
 		.input-wrapper.valid { border-color:#10b981; }
 		.input-icon {
 			display:flex; align-items:center; justify-content:center;
-			width:44px; min-width:44px; max-width:44px; padding:0 0 0 12px;
-			color:#9ca3af; transition:color .25s; overflow:hidden;
+			width:36px; min-width:36px; flex-shrink:0;
+			padding-inline-start:10px;
+			color:#9ca3af; transition:color .25s;
 		}
 		.input-wrapper:focus-within .input-icon { color:var(--brand); }
 		.input-wrapper.valid .input-icon { color:#10b981; }
-		.input-icon svg { width:20px; height:20px; max-width:20px; flex-shrink:0; }
+		.input-icon svg { width:18px; height:18px; display:block; }
 		.card-form-fields input {
-			flex:1; border:0; outline:none; padding:14px 12px 14px 8px;
+			flex:1; border:0; outline:none; padding:12px 8px;
 			font-size:16px; font-family:inherit; background:transparent;
 			color:#101010; direction:ltr; text-align:left;
-			min-width:0;
+			min-width:0; width:0;
 		}
 		.card-form-fields input::placeholder { color:#c0c0c0; }
 		.brand-indicator {
-			display:flex; align-items:center; padding:0 8px 0 2px;
-			transition:opacity .3s,transform .3s; flex-shrink:0;
+			display:flex; align-items:center; padding:0 6px; flex-shrink:0;
+			transition:opacity .3s,transform .3s;
 		}
-		.brand-indicator svg { height:20px; width:auto; max-width:40px; }
-		.brand-indicator.hidden { opacity:0; transform:scale(.7); pointer-events:none; width:0; padding:0; }
-		.brand-indicator.visible { opacity:1; transform:scale(1); }
+		.brand-indicator svg { height:18px; width:auto; max-width:34px; display:block; }
+		.brand-indicator.hidden { opacity:0; width:0; padding:0; overflow:hidden; }
+		.brand-indicator.visible { opacity:1; }
 		.field-error {
 			display:none; align-items:center; gap:4px;
-			margin-top:5px; padding:0 2px; font-size:12px; color:#ef4444;
+			margin-top:4px; font-size:11px; color:#ef4444;
 		}
 		.field-error.show { display:flex; }
-		.field-error svg { width:13px; height:13px; flex-shrink:0; }
+		.field-error svg { width:12px; height:12px; flex-shrink:0; }
 		.valid-check {
 			display:none; align-items:center; justify-content:center;
-			width:24px; height:24px; margin:0 8px 0 2px; border-radius:50%;
+			width:22px; height:22px; margin:0 6px; border-radius:50%;
 			background:#10b981; color:#fff; flex-shrink:0;
 		}
 		.valid-check.show { display:flex; }
-		.valid-check svg { width:14px; height:14px; }
-		.row-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+		.valid-check svg { width:12px; height:12px; }
+		.row-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+		.row-2 .input-icon { width:30px; min-width:30px; padding-inline-start:8px; }
+		.row-2 .input-icon svg { width:15px; height:15px; }
+		.row-2 .valid-check { width:18px; height:18px; margin:0 4px; }
+		.row-2 .valid-check svg { width:10px; height:10px; }
+		.row-2 input { padding:11px 6px; font-size:15px; }
 		.brands-row {
-			display:flex; align-items:center; justify-content:center; gap:10px;
-			margin-bottom:4px; padding:12px 0; overflow:hidden;
+			display:flex; align-items:center; justify-content:center; gap:8px;
+			margin-bottom:2px; padding:10px 0;
 		}
-		.brands-row svg { height:24px; width:auto; max-width:80px; flex-shrink:0; }
-		.brands-row .sep { width:1px; height:18px; background:#e0e0e0; flex-shrink:0; }
+		.brands-row svg { height:22px; width:auto; max-width:70px; display:block; }
+		.brands-row .sep { width:1px; height:16px; background:#e0e0e0; }
 		.secure-badge {
-			display:flex; align-items:center; justify-content:center; gap:5px;
-			margin-top:10px; font-size:11px; color:#6b7280;
+			display:flex; align-items:center; justify-content:center; gap:4px;
+			margin-top:8px; font-size:11px; color:#6b7280;
 		}
-		.secure-badge svg { width:13px; height:13px; color:#10b981; }
+		.secure-badge svg { width:12px; height:12px; color:#10b981; }
+		@media(max-width:400px){
+			.payment-card { padding:28px 14px 28px !important; }
+			.payment-shell { margin-top:40px !important; }
+			.row-2 { gap:8px; }
+			.row-2 .input-icon { width:26px; min-width:26px; padding-inline-start:6px; }
+			.row-2 .input-icon svg { width:13px; height:13px; }
+			.brands-row svg { height:18px; max-width:56px; }
+		}
 	</style>
 </head>
 <body>
