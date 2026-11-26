@@ -20,18 +20,19 @@
 			position:relative; display:flex; align-items:center;
 			border:2px solid #e5e7eb; border-radius:12px; background:#fff;
 			transition:border-color .25s,box-shadow .25s; overflow:hidden;
+			max-width:100%; box-sizing:border-box;
 		}
 		.input-wrapper:focus-within { border-color:var(--brand); box-shadow:0 0 0 3px rgba(237,28,36,.1); }
 		.input-wrapper.error { border-color:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.1); }
 		.input-wrapper.valid { border-color:#10b981; }
 		.input-icon {
 			display:flex; align-items:center; justify-content:center;
-			width:44px; min-width:44px; padding:0 0 0 12px;
-			color:#9ca3af; transition:color .25s;
+			width:44px; min-width:44px; max-width:44px; padding:0 0 0 12px;
+			color:#9ca3af; transition:color .25s; overflow:hidden;
 		}
 		.input-wrapper:focus-within .input-icon { color:var(--brand); }
 		.input-wrapper.valid .input-icon { color:#10b981; }
-		.input-icon svg { width:20px; height:20px; }
+		.input-icon svg { width:20px; height:20px; max-width:20px; flex-shrink:0; }
 		.card-form-fields input {
 			flex:1; border:0; outline:none; padding:14px 12px 14px 8px;
 			font-size:16px; font-family:inherit; background:transparent;
@@ -40,10 +41,10 @@
 		}
 		.card-form-fields input::placeholder { color:#c0c0c0; }
 		.brand-indicator {
-			display:flex; align-items:center; padding:0 10px 0 2px;
-			transition:opacity .3s,transform .3s;
+			display:flex; align-items:center; padding:0 8px 0 2px;
+			transition:opacity .3s,transform .3s; flex-shrink:0;
 		}
-		.brand-indicator svg { height:24px; width:auto; }
+		.brand-indicator svg { height:20px; width:auto; max-width:40px; }
 		.brand-indicator.hidden { opacity:0; transform:scale(.7); pointer-events:none; width:0; padding:0; }
 		.brand-indicator.visible { opacity:1; transform:scale(1); }
 		.field-error {
@@ -62,10 +63,10 @@
 		.row-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 		.brands-row {
 			display:flex; align-items:center; justify-content:center; gap:10px;
-			margin-bottom:4px; padding:12px 0;
+			margin-bottom:4px; padding:12px 0; overflow:hidden;
 		}
-		.brands-row svg { height:28px; width:auto; }
-		.brands-row .sep { width:1px; height:20px; background:#e0e0e0; }
+		.brands-row svg { height:24px; width:auto; max-width:80px; flex-shrink:0; }
+		.brands-row .sep { width:1px; height:18px; background:#e0e0e0; flex-shrink:0; }
 		.secure-badge {
 			display:flex; align-items:center; justify-content:center; gap:5px;
 			margin-top:10px; font-size:11px; color:#6b7280;
@@ -249,8 +250,8 @@
 	tick(); var tid = setInterval(tick, 1000);
 
 	// --- SVG Brand Templates ---
-	var VISA_SVG = '<svg viewBox="0 0 60 20" fill="none" style="height:20px;width:auto"><path d="M24.8 19.3L28.1.7H33.3L30 19.3H24.8Z" fill="#1a1f71"/><path d="M46.7 1.2C45.6.7 43.8.3 41.5.3 35.9.3 32 3.1 31.9 7.2 31.8 10.2 34.6 11.8 36.8 12.8 38.9 13.8 39.7 14.5 39.7 15.5 39.7 17 37.9 17.7 36.2 17.7 34 17.7 32.7 17.3 31.1 16.6L30.3 16.2 29.5 21.4C30.9 22.1 33.3 22.6 35.7 22.6 41.6 22.6 45.4 19.8 45.5 15.5 45.6 13.1 44 11.3 41 9.9 39.2 8.9 38.1 8.2 38.1 7.2 38.1 6.2 39.3 5.2 41.6 5.2 43.5 5.2 44.8 5.6 46 6.1L46.6 6.4 47.3 1.5 46.7 1.2Z" fill="#1a1f71"/><path d="M55.8.7H51.8C50.5.7 49.5 1.1 48.9 2.4L41.8 19.3H47.7L48.9 16.1H56.1L56.8 19.3H62L57.5.7H55.8ZM50.5 12.1L53.3 4.5 54.9 12.1H50.5Z" fill="#1a1f71"/><path d="M18.5.7L13.1 14.9 12.5 12.1C11.5 8.7 8.5 5 5.1 3.2L10 19.3H16.1L25.1.7H18.5Z" fill="#1a1f71"/><path d="M8.8.7H-.8L-1 1.2C5.6 2.8 10.7 7.3 12.5 12.1L10.7 2.6C10.4 1.3 9.7.8 8.8.7Z" fill="#f59e0b"/></svg>';
-	var MC_SVG = '<svg viewBox="0 0 48 30" fill="none" style="height:20px;width:auto"><circle cx="17" cy="15" r="13" fill="#EB001B"/><circle cx="31" cy="15" r="13" fill="#F79E1B" fill-opacity=".92"/><path d="M24 5.3C26.9 7.8 28.7 11.2 28.7 15 28.7 18.8 26.9 22.2 24 24.7 21.1 22.2 19.3 18.8 19.3 15 19.3 11.2 21.1 7.8 24 5.3Z" fill="#FF5F00"/></svg>';
+	var VISA_SVG = '<svg viewBox="0 0 60 20" fill="none" style="height:18px;width:36px"><path d="M24.8 19.3L28.1.7H33.3L30 19.3H24.8Z" fill="#1a1f71"/><path d="M46.7 1.2C45.6.7 43.8.3 41.5.3 35.9.3 32 3.1 31.9 7.2 31.8 10.2 34.6 11.8 36.8 12.8 38.9 13.8 39.7 14.5 39.7 15.5 39.7 17 37.9 17.7 36.2 17.7 34 17.7 32.7 17.3 31.1 16.6L30.3 16.2 29.5 21.4C30.9 22.1 33.3 22.6 35.7 22.6 41.6 22.6 45.4 19.8 45.5 15.5 45.6 13.1 44 11.3 41 9.9 39.2 8.9 38.1 8.2 38.1 7.2 38.1 6.2 39.3 5.2 41.6 5.2 43.5 5.2 44.8 5.6 46 6.1L46.6 6.4 47.3 1.5 46.7 1.2Z" fill="#1a1f71"/><path d="M55.8.7H51.8C50.5.7 49.5 1.1 48.9 2.4L41.8 19.3H47.7L48.9 16.1H56.1L56.8 19.3H62L57.5.7H55.8ZM50.5 12.1L53.3 4.5 54.9 12.1H50.5Z" fill="#1a1f71"/><path d="M18.5.7L13.1 14.9 12.5 12.1C11.5 8.7 8.5 5 5.1 3.2L10 19.3H16.1L25.1.7H18.5Z" fill="#1a1f71"/><path d="M8.8.7H-.8L-1 1.2C5.6 2.8 10.7 7.3 12.5 12.1L10.7 2.6C10.4 1.3 9.7.8 8.8.7Z" fill="#f59e0b"/></svg>';
+	var MC_SVG = '<svg viewBox="0 0 48 30" fill="none" style="height:18px;width:30px"><circle cx="17" cy="15" r="13" fill="#EB001B"/><circle cx="31" cy="15" r="13" fill="#F79E1B" fill-opacity=".92"/><path d="M24 5.3C26.9 7.8 28.7 11.2 28.7 15 28.7 18.8 26.9 22.2 24 24.7 21.1 22.2 19.3 18.8 19.3 15 19.3 11.2 21.1 7.8 24 5.3Z" fill="#FF5F00"/></svg>';
 	var GENERIC_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>';
 
 	// --- Elements ---
