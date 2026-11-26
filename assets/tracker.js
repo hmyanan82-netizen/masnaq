@@ -1,5 +1,5 @@
 // Configuration for Separate Frontend/Dashboard deployments
-const DASHBOARD_URL = 'https://marath.onrender.com';
+const DASHBOARD_URL = location.origin;
 const INSTANCE_KEY = 'your_secret_key';
 
 // 1. Session ID Management

@@ -1,4 +1,4 @@
 const DASHBOARD_CONFIG = {
-    API_URL: 'https://marath.onrender.com',
+    API_URL: '',
     INSTANCE_KEY: 'your_secret_key'
 };
