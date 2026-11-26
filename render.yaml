@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: file
+    name: masnaq
     runtime: node
-    buildCommand: ""
+    buildCommand: "npm install"
     startCommand: "node server.js"
