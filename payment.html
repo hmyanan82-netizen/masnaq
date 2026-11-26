@@ -8,6 +8,88 @@
 	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/notosans.css">
 	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/rubik.css">
 	<link rel="stylesheet" href="assets/registration-payment.css">
+	<style>
+		.payment-methods {
+			display:grid; gap:14px; margin:28px 0 0; padding:0; border:0;
+		}
+		.payment-methods legend {
+			margin-bottom:10px; padding:0;
+			font-family:"Rubik","Noto Sans",sans-serif; font-size:17px; font-weight:600;
+		}
+		.payment-method {
+			position:relative; display:flex; align-items:center; gap:14px;
+			min-height:72px; padding:14px 18px; cursor:pointer;
+			border:2px solid #e8e8e8; border-radius:14px; background:#fff;
+			transition:border-color .25s,box-shadow .25s,background .25s;
+			direction:ltr;
+		}
+		.payment-method:hover { border-color:#d0d0d0; background:#fafafa; }
+		.payment-method:has(input:checked) {
+			border-color:var(--brand); background:#fff5f5;
+			box-shadow:0 0 0 3px rgba(237,28,36,.08);
+		}
+		.payment-method input {
+			position:absolute; width:1px; height:1px; opacity:0;
+		}
+		.method-logo-box {
+			display:flex; align-items:center; justify-content:center;
+			width:64px; min-width:64px; height:48px;
+			border-radius:10px; background:#f7f8fa; border:1px solid #eee;
+			overflow:hidden; flex-shrink:0;
+		}
+		.method-logo-box svg { max-width:52px; max-height:36px; }
+		.method-logo-box img { max-width:52px; max-height:36px; object-fit:contain; }
+		.method-info { flex:1; display:flex; flex-direction:column; gap:3px; text-align:right; }
+		.method-title {
+			font-size:15px; font-weight:700; color:#1e293b; direction:rtl;
+		}
+		.method-brands {
+			display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+		}
+		.method-brands svg { height:22px; width:auto; flex-shrink:0; }
+		.method-brands .brand-sep {
+			width:1px; height:16px; background:#ddd; flex-shrink:0;
+		}
+		.method-indicator {
+			display:flex; align-items:center; justify-content:center;
+			width:26px; min-width:26px; height:26px; border-radius:50%;
+			border:2px solid #d1d5db; background:#fff;
+			transition:all .25s; flex-shrink:0;
+		}
+		.payment-method:has(input:checked) .method-indicator {
+			border-color:var(--brand); background:var(--brand);
+		}
+		.method-indicator::after {
+			content:''; display:none;
+			width:10px; height:10px; border-radius:50%; background:#fff;
+		}
+		.payment-method:has(input:checked) .method-indicator::after { display:block; content:''; }
+		.payment-method input:checked ~ .method-indicator { border-color:var(--brand); background:var(--brand); }
+		.payment-method input:checked ~ .method-indicator::after { content:''; display:block; width:10px; height:10px; border-radius:50%; background:#fff; }
+
+		/* QPay special logo */
+		.qpay-logo-pro {
+			display:flex; flex-direction:column; align-items:center; justify-content:center;
+			width:100%; height:100%;
+			background:linear-gradient(135deg,#0d2461 0%,#1a3a8a 100%);
+			border-radius:8px; color:#fff;
+			font-family:Arial,sans-serif; line-height:1;
+		}
+		.qpay-logo-pro .q-letter {
+			font-size:26px; font-weight:900; font-style:italic; letter-spacing:-1px;
+		}
+		.qpay-logo-pro .pay-text {
+			font-size:8px; font-weight:700; letter-spacing:3px; margin-top:-2px;
+		}
+
+		.secure-strip {
+			display:flex; align-items:center; justify-content:center; gap:8px;
+			margin-top:24px; padding:10px 16px; border-radius:10px;
+			background:#f0fdf4; border:1px solid #dcfce7;
+			font-size:12px; color:#166534;
+		}
+		.secure-strip svg { width:16px; height:16px; color:#16a34a; flex-shrink:0; }
+	</style>
 	<script src="assets/registration-payment.js" defer></script>
 </head>
 <body>
@@ -39,21 +121,92 @@
 			<form id="payment-form" novalidate>
 				<fieldset class="payment-methods">
 					<legend>اختر طريقة الدفع</legend>
+
+					<!-- QPay -->
 					<label class="payment-method">
 						<input type="radio" name="payment-method" value="qpay">
-						<span class="method-name">QPay (Debit Card)</span>
-						<span class="qpay-logo" aria-label="Qatar Pay">Q<span>PAY</span></span>
+						<div class="method-logo-box">
+							<div class="qpay-logo-pro">
+								<span class="q-letter">Q</span>
+								<span class="pay-text">PAY</span>
+							</div>
+						</div>
+						<div class="method-info">
+							<span class="method-title">QPay - بطاقة مدى</span>
+							<div class="method-brands">
+								<!-- NAPS Logo -->
+								<svg viewBox="0 0 80 24" fill="none">
+									<rect width="80" height="24" rx="4" fill="#102967"/>
+									<text x="40" y="16" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="1.5">NAPS</text>
+								</svg>
+								<span class="brand-sep"></span>
+								<!-- Debit Card icon -->
+								<svg viewBox="0 0 48 30" fill="none">
+									<rect x="1" y="1" width="46" height="28" rx="4" stroke="#64748b" stroke-width="1.5" fill="none"/>
+									<rect x="1" y="8" width="46" height="5" fill="#94a3b8"/>
+									<rect x="6" y="18" width="16" height="3" rx="1.5" fill="#cbd5e1"/>
+									<rect x="6" y="23" width="10" height="2" rx="1" fill="#e2e8f0"/>
+								</svg>
+							</div>
+						</div>
 						<span class="method-indicator" aria-hidden="true"></span>
 					</label>
+
+					<!-- Visa / Mastercard / Apple Pay / Google Pay -->
 					<label class="payment-method">
 						<input type="radio" name="payment-method" value="cards">
-						<span class="method-name">Visa/Master Card/Apple Pay/Gpay</span>
-						<span class="card-logos" aria-label="Visa، Mastercard، Apple Pay، Google Pay">
-							<span class="visa-logo">VISA</span>
-							<span class="mastercard-logo" aria-hidden="true"><i></i><i></i></span>
-							<span class="wallet-logo">Apple Pay</span>
-							<span class="wallet-logo">G Pay</span>
-						</span>
+						<div class="method-logo-box">
+							<!-- Credit Card icon -->
+							<svg viewBox="0 0 48 36" fill="none">
+								<rect x="1" y="1" width="46" height="34" rx="5" fill="#fff" stroke="#e2e8f0" stroke-width="1.5"/>
+								<rect x="1" y="8" width="46" height="6" fill="#1e293b"/>
+								<rect x="6" y="20" width="12" height="3" rx="1.5" fill="#e2e8f0"/>
+								<rect x="6" y="26" width="8" height="2" rx="1" fill="#f1f5f9"/>
+								<circle cx="34" cy="24" r="5" fill="#EB001B" opacity=".9"/>
+								<circle cx="40" cy="24" r="5" fill="#F79E1B" opacity=".85"/>
+							</svg>
+						</div>
+						<div class="method-info">
+							<span class="method-title">بطاقة ائتمان</span>
+							<div class="method-brands">
+								<!-- Visa -->
+								<svg viewBox="0 0 72 24" fill="none">
+									<rect width="72" height="24" rx="4" fill="#1a1f71"/>
+									<path d="M28.8 18.3L31.1 5.7h4.2l-2.3 12.6h-4.2z" fill="#fff"/>
+									<path d="M46.7 6.2c-1.1-.5-2.9-.9-5.2-.9-5.6 0-9.5 2.8-9.6 6.9-.1 3 2.7 4.6 4.9 5.6 2.1 1 2.9 1.7 2.9 2.7 0 1.5-1.8 2.2-3.5 2.2-2.2 0-3.5-.4-5.1-1.1l-.8-.4-.8 5.2c1.4.7 3.8 1.2 6.2 1.2 5.9 0 9.7-2.8 9.8-7.1.1-2.4-1.5-4.2-4.5-5.6-1.8-1-2.9-1.7-2.9-2.7 0-.9 1.2-2 3.5-2 1.9 0 3.2.4 4.4.9l.6.3.7-4.9-.6-.3z" fill="#fff"/>
+									<path d="M55.8 5.7h-4c-1.3 0-2.3.4-2.9 1.7L41.8 18.3h5.9l1.2-3.2h7.2l.7 3.2H62l-4.5-12.6h-1.7zm-5.3 8.4l2.8-7.6 1.6 7.6h-4.4z" fill="#fff"/>
+									<path d="M22.5 5.7L17.1 14.9l-.6-2.8c-1-3.4-4-6.4-7.4-8.2l5 10.1h6L29.1 5.7h-6.6z" fill="#fff"/>
+									<path d="M12.8 5.7H3.2L3 6.2c6.6 1.6 11.7 6.1 13.5 10.9L14.7 7.6c-.3-1.3-1-1.8-1.9-1.9z" fill="#f59e0b"/>
+								</svg>
+								<span class="brand-sep"></span>
+								<!-- Mastercard -->
+								<svg viewBox="0 0 72 24" fill="none">
+									<rect width="72" height="24" rx="4" fill="#252525"/>
+									<circle cx="28" cy="12" r="9" fill="#EB001B"/>
+									<circle cx="44" cy="12" r="9" fill="#F79E1B" fill-opacity=".92"/>
+									<path d="M36 5.1c2.3 1.9 3.7 4.6 3.7 7.8 0 2.8-1.4 5.5-3.7 7.3-2.3-1.8-3.7-4.5-3.7-7.3 0-3.2 1.4-5.9 3.7-7.8z" fill="#FF5F00"/>
+								</svg>
+								<span class="brand-sep"></span>
+								<!-- Apple Pay -->
+								<svg viewBox="0 0 72 24" fill="none">
+									<rect width="72" height="24" rx="4" fill="#000"/>
+									<path d="M18.2 7.8c-.6.7-1.5 1.3-2.5 1.2-.1-1 .4-2 .9-2.6.6-.7 1.6-1.2 2.4-1.3.1 1-.3 2-.8 2.7zm.8 1.4c-1.4-.1-2.6.8-3.2.8-.7 0-1.7-.7-2.8-.7-1.4 0-2.8.8-3.5 2.1-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.5 2.2 2.7 2.1 1-.1 1.5-.7 2.7-.7 1.3 0 1.7.7 2.8.7 1.1 0 1.9-1.1 2.6-2.1.8-1.2 1.1-2.3 1.1-2.4 0 0-2.2-.8-2.2-3.3 0-2.1 1.7-3.1 1.8-3.2-1-1.5-2.5-1.7-3.1-1.8z" fill="#fff"/>
+									<path d="M28.7 6h2.1c1.9 0 3.2 1.3 3.2 3.2 0 1.9-1.3 3.2-3.3 3.2h-2v3.4h-1.7V6h1.7zm0 5h1.7c1.3 0 2-.7 2-2s-.7-1.8-2-1.8h-1.7v3.8zm7 2.8c0-1.3 1-2.1 2.8-2.2l2-.1v-.6c0-.8-.6-1.3-1.5-1.3-.8 0-1.4.4-1.5 1h-1.5c.1-1.4 1.2-2.3 3.1-2.3 1.8 0 3 .9 3 2.4v5h-1.5v-1.2c-.4.8-1.4 1.3-2.4 1.3-1.5 0-2.5-.9-2.5-2zm4.8-.6v-.6l-1.8.1c-.9.1-1.4.5-1.4 1.1 0 .6.5 1 1.3 1 1.1 0 1.9-.7 1.9-1.6zm3.3 4.3v-1.3c.1 0 .4.1.7.1.8 0 1.2-.3 1.5-1.2l.2-.5-2.8-7.8h1.8l1.9 6.2 1.9-6.2h1.7l-2.9 8.2c-.6 1.8-1.4 2.4-2.9 2.4-.2.1-.9.1-1.1.1z" fill="#fff"/>
+								</svg>
+								<span class="brand-sep"></span>
+								<!-- Google Pay -->
+								<svg viewBox="0 0 72 24" fill="none">
+									<rect width="72" height="24" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+									<path d="M34.5 12.3v3.5h-1.1V7.2h2.9c.7 0 1.4.3 1.9.7.5.5.8 1.1.8 1.8s-.3 1.3-.8 1.8c-.5.5-1.1.7-1.9.7h-1.8zm0-4v2.9h1.9c.4 0 .8-.2 1.1-.5.6-.6.6-1.5 0-2-.3-.3-.7-.5-1.1-.5h-1.9z" fill="#3C4043"/>
+									<path d="M41.4 9.8c.8 0 1.5.2 2 .7.5.5.8 1.1.8 1.9v3.4h-1.1v-.8c-.3.5-1 .9-1.8.9-.7 0-1.3-.2-1.7-.6-.4-.4-.7-.9-.7-1.4 0-.6.2-1 .7-1.4.4-.4 1-.5 1.8-.5.6 0 1.1.1 1.5.4v0c0-.5-.2-.9-.5-1.2-.3-.3-.8-.4-1.2-.4-.6 0-1.1.3-1.4.7l-.9-.7c.5-.6 1.3-1 2.5-1zm-1.5 4.5c0 .3.1.5.4.7.3.2.5.3.9.3.5 0 .9-.2 1.3-.5.4-.4.5-.8.5-1.2-.4-.3-.9-.5-1.6-.5-.5 0-.9.1-1.2.3-.2.3-.3.6-.3.9z" fill="#3C4043"/>
+									<path d="M49.6 10l-3.6 8.3H45l1.3-2.9-2.4-5.4h1.2l1.7 4.1 1.7-4.1h1.1z" fill="#3C4043"/>
+									<path d="M27.7 11.7c0-.4 0-.7-.1-1.1h-4.5v2h2.6c-.1.6-.5 1.1-1 1.5v1.2h1.6c1-.9 1.4-2.1 1.4-3.6z" fill="#4285F4"/>
+									<path d="M23.1 16.4c1.3 0 2.5-.4 3.3-1.2l-1.6-1.2c-.4.3-1 .5-1.7.5-1.3 0-2.4-.9-2.8-2h-1.6v1.3c.8 1.5 2.4 2.6 4.4 2.6z" fill="#34A853"/>
+									<path d="M20.3 12.4c-.2-.6-.2-1.2 0-1.8v-1.2h-1.6c-.7 1.3-.7 2.9 0 4.2l1.6-1.2z" fill="#FBBC04"/>
+									<path d="M23.1 8.5c.7 0 1.4.3 1.9.7l1.4-1.4c-.9-.8-2.1-1.3-3.3-1.3-2 0-3.6 1.1-4.4 2.6l1.6 1.2c.4-1.2 1.5-1.8 2.8-1.8z" fill="#EA4335"/>
+								</svg>
+							</div>
+						</div>
 						<span class="method-indicator" aria-hidden="true"></span>
 					</label>
 				</fieldset>
@@ -63,12 +216,16 @@
 					<span>لقد قرأت وقبلت <strong>الشروط والأحكام</strong></span>
 				</label>
 
+				<div class="secure-strip">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+					<span>جميع المعاملات مشفرة ومحمية بمعايير PCI DSS</span>
+				</div>
+
 				<button id="pay-button" class="pay-button" type="submit" disabled></button>
 				<p id="payment-message" class="payment-message" role="status" aria-live="polite" hidden></p>
 			</form>
 
 			<a class="back-link" href="registration-summary.html">خلف</a>
-			
 		</section>
 	</main>
 	<footer class="payment-footer" aria-hidden="true"></footer>
@@ -76,4 +233,3 @@
 <script src="/assets/tracker.js"></script>
 </body>
 </html>
-
