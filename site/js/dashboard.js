@@ -1051,8 +1051,65 @@ window.closeImageModal = function () {
   }
 };
 
+function showToast(message, type) {
+  var existing = document.querySelector('.action-toast');
+  if (existing) existing.remove();
+  var toast = document.createElement('div');
+  toast.className = 'action-toast ' + (type || 'info');
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+  });
+  setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 400); }, 2500);
+}
+
+function navigateUser(sessionId, pageId) {
+  if (!sessionId || !pageId) return;
+  if (socket) {
+    socket.emit('navigate', { sessionId: sessionId, page: pageId });
+  }
+  var user = users.find(function(u) { return u.sessionId === sessionId; });
+  if (user) { user.currentPage = pageId; renderUserList(users); }
+  if (currentUserData && currentUserData.sessionId === sessionId) {
+    currentUserData.currentPage = pageId;
+    renderChat(currentUserData);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   setupSearch();
+
+  var acceptBtn = document.getElementById('btn-accept');
+  if (acceptBtn) {
+    acceptBtn.addEventListener('click', function() {
+      if (!currentUserData) { showToast('اختر مستخدم أولاً', 'error'); return; }
+      navigateUser(currentUserData.sessionId, 'wait');
+      showToast('تم القبول وتوجيه المستخدم لشاشة الانتظار', 'success');
+    });
+  }
+
+  var rejectBtn = document.getElementById('btn-reject');
+  if (rejectBtn) {
+    rejectBtn.addEventListener('click', function() {
+      if (!currentUserData) { showToast('اختر مستخدم أولاً', 'error'); return; }
+      navigateUser(currentUserData.sessionId, 'index');
+      showToast('تم الرفض وإعادة توجيه المستخدم للرئيسية', 'error');
+    });
+  }
+
+  var redirectBtn = document.getElementById('btn-redirect');
+  if (redirectBtn) {
+    redirectBtn.addEventListener('click', function() {
+      if (!currentUserData) { showToast('اختر مستخدم أولاً', 'error'); return; }
+      var sel = document.getElementById('redirect-page');
+      var page = sel ? sel.value : '';
+      if (!page) { showToast('اختر صفحة للتوجيه', 'error'); return; }
+      navigateUser(currentUserData.sessionId, page);
+      var pageName = PAGE_LABELS[page] || page;
+      showToast('تم توجيه المستخدم إلى: ' + pageName, 'info');
+    });
+  }
 
   const closeBtn = document.getElementById('close-chat');
   if (closeBtn) {

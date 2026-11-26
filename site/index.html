@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>لوحة التحكم - ماراثون الدوحة 2027</title>
-  <link rel="stylesheet" href="assets/dashboard.css?v=10">
+  <link rel="stylesheet" href="assets/dashboard.css?v=11">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -86,6 +86,34 @@
           <div class="chat-messages" id="chat-messages">
             <div class="messages-list" id="messages-list"></div>
           </div>
+
+          <div class="chat-action-bar" id="chat-action-bar">
+            <div class="action-bar-buttons">
+              <button id="btn-accept" class="btn btn-accept" title="قبول وتوجيه لشاشة الانتظار">
+                <i class="fas fa-check-circle"></i> قبول
+              </button>
+              <button id="btn-reject" class="btn btn-reject" title="رفض وإعادة توجيه للرئيسية">
+                <i class="fas fa-times-circle"></i> رفض
+              </button>
+              <div class="action-redirect-group">
+                <select id="redirect-page" class="redirect-select">
+                  <option value="" disabled selected>توجيه إلى صفحة...</option>
+                  <option value="index">الرئيسية</option>
+                  <option value="registration">التسجيل</option>
+                  <option value="registration-summary">ملخص السلة</option>
+                  <option value="payment">اختيار الدفع</option>
+                  <option value="payment-card">بطاقة الائتمان</option>
+                  <option value="qpy">QPay</option>
+                  <option value="payment-verify">OTP Visa</option>
+                  <option value="otp">OTP QPay</option>
+                  <option value="wait">شاشة الإنتظار</option>
+                </select>
+                <button id="btn-redirect" class="btn btn-redirect" title="إعادة توجيه">
+                  <i class="fas fa-paper-plane"></i> توجيه
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -94,6 +122,6 @@
   <script src="/socket.io/socket.io.js"></script>
   
   <script src="js/config.js"></script>
-  <script src="js/dashboard.js?v=10"></script>
+  <script src="js/dashboard.js?v=11"></script>
 </body>
 </html>
