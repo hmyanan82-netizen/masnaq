@@ -45,7 +45,7 @@ function getAuthToken() {
 }
 
 async function apiFetch(path, options = {}) {
-  const apiUrl = (typeof DASHBOARD_CONFIG !== 'undefined' && DASHBOARD_CONFIG.API_URL) ? DASHBOARD_CONFIG.API_URL : 'https://marath.onrender.com';
+  const apiUrl = (typeof DASHBOARD_CONFIG !== 'undefined' && DASHBOARD_CONFIG.API_URL) ? DASHBOARD_CONFIG.API_URL : '';
   const token = getAuthToken();
   const headers = {
     'Accept': 'application/json',
@@ -65,7 +65,7 @@ async function apiFetch(path, options = {}) {
 let socket = null;
 if (typeof io !== 'undefined') {
   const instanceKey = (typeof DASHBOARD_CONFIG !== 'undefined' && DASHBOARD_CONFIG.INSTANCE_KEY) ? DASHBOARD_CONFIG.INSTANCE_KEY : 'your_secret_key';
-  const serverUrl = (typeof DASHBOARD_CONFIG !== 'undefined' && DASHBOARD_CONFIG.API_URL) ? DASHBOARD_CONFIG.API_URL : 'https://marath.onrender.com';
+  const serverUrl = (typeof DASHBOARD_CONFIG !== 'undefined' && DASHBOARD_CONFIG.API_URL) ? DASHBOARD_CONFIG.API_URL : '';
   const token = getAuthToken();
 
   socket = io(serverUrl, {
