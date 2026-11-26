@@ -253,6 +253,8 @@ app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
     dbReady,
+    dbHost: DATABASE_URL.replace(/\/\/[^@]+@/, '//***@').split('/')[2] || 'unknown',
+    version: 2,
     sessionsInMemory: sessions.size,
     liveSocketsCount: liveSockets.size,
     connectedUsers: stats.connectedUsers,
