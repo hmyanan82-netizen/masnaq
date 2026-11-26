@@ -164,6 +164,17 @@ io.on("connection", (socket) => {
   });
 });
 
+// --- Broadcast live stats every 3 seconds ---
+setInterval(() => {
+  let connectedUsers = 0;
+  sessions.forEach(s => { if (s.isConnected) connectedUsers++; });
+  io.to("dashboard").emit("stats:live", {
+    connectedUsers,
+    totalRegistrations: sessions.size,
+    activeUsers: connectedUsers
+  });
+}, 3000);
+
 // --- Static files ---
 app.use(express.static(path.join(__dirname), {
   extensions: ["html"],

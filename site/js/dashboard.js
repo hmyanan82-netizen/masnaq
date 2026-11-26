@@ -83,6 +83,13 @@ if (typeof io !== 'undefined') {
   socket.on('disconnect', () => {
     console.log('Socket disconnected');
   });
+
+  socket.on('stats:live', (stats) => {
+    const connUsers = document.getElementById('connected-users');
+    const totalReg = document.getElementById('total-registrations');
+    if (connUsers) connUsers.textContent = stats.connectedUsers || 0;
+    if (totalReg) totalReg.textContent = stats.totalRegistrations || 0;
+  });
 } else {
   console.error("Socket.io script failed to load. The backend server might be down.");
 }
